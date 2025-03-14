@@ -6,7 +6,7 @@ return [
             // OAuth2
             'fos_oauth_server_token' => [
                 'path'       => '/oauth/v2/token',
-                'controller' => 'fos_oauth_server.controller.token:tokenAction',
+                'controller' => 'fos_oauth_server.controller.token::tokenAction',
                 'method'     => 'GET|POST',
             ],
             'fos_oauth_server_authorize' => [
@@ -43,8 +43,10 @@ return [
             'items' => [
                 'mautic.api.client.menu.index' => [
                     'route'     => 'mautic_client_index',
-                    'iconClass' => 'fa-puzzle-piece',
                     'access'    => 'api:clients:view',
+                    'parent'    => 'mautic.core.integrations',
+                    'iconClass' => 'ri-terminal-box-line',
+                    'priority'  => 17,
                     'checks'    => [
                         'parameters' => [
                             'api_enabled' => true,

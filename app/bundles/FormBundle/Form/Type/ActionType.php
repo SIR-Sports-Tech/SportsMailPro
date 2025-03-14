@@ -68,10 +68,10 @@ class ActionType extends AbstractType
         $update = !empty($properties);
         if (!empty($update)) {
             $btnValue = 'mautic.core.form.update';
-            $btnIcon  = 'fa fa-pencil';
+            $btnIcon  = 'ri-edit-line';
         } else {
             $btnValue = 'mautic.core.form.add';
-            $btnIcon  = 'fa fa-plus';
+            $btnIcon  = 'ri-add-line';
         }
 
         $builder->add(
@@ -105,7 +105,7 @@ class ActionType extends AbstractType
         $resolver->setRequired(['settings', 'formId']);
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'formaction';
     }

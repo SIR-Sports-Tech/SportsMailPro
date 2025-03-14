@@ -3,7 +3,7 @@
 namespace Mautic\CoreBundle\Controller;
 
 use Doctrine\Persistence\ManagerRegistry;
-use Mautic\CoreBundle\Factory\MauticFactory;
+use Mautic\CoreBundle\Entity\OptimisticLockInterface;
 use Mautic\CoreBundle\Factory\ModelFactory;
 use Mautic\CoreBundle\Form\Type\DateRangeType;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
@@ -16,6 +16,7 @@ use Mautic\CoreBundle\Translation\Translator;
 use Mautic\FormBundle\Helper\FormFieldHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\Form;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -32,7 +33,6 @@ abstract class AbstractStandardFormController extends AbstractFormController
         protected FormFactoryInterface $formFactory,
         protected FormFieldHelper $fieldHelper,
         ManagerRegistry $managerRegistry,
-        MauticFactory $factory,
         ModelFactory $modelFactory,
         UserHelper $userHelper,
         CoreParametersHelper $coreParametersHelper,
@@ -40,9 +40,9 @@ abstract class AbstractStandardFormController extends AbstractFormController
         Translator $translator,
         FlashBag $flashBag,
         RequestStack $requestStack,
-        CorePermissions $security
+        CorePermissions $security,
     ) {
-        parent::__construct($managerRegistry, $factory, $modelFactory, $userHelper, $coreParametersHelper, $dispatcher, $translator, $flashBag, $requestStack, $security);
+        parent::__construct($managerRegistry, $modelFactory, $userHelper, $coreParametersHelper, $dispatcher, $translator, $flashBag, $requestStack, $security);
     }
 
     /**
@@ -382,13 +382,14 @@ abstract class AbstractStandardFormController extends AbstractFormController
 
         $isPost = !$ignorePost && 'POST' == $request->getMethod();
         $this->beforeFormProcessed($entity, $form, 'edit', $isPost, $objectId, $isClone);
+        $this->setOptimisticLockVersion($entity, $form);
 
         // /Check for a submitted form and process it
         if ($isPost) {
             $valid = false;
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
-                    if ($valid = $this->beforeEntitySave($entity, $form, 'edit', $objectId, $isClone)) {
+                    if ($valid = $this->checkOptimisticLockVersion($entity, $form, $isClone) && $this->beforeEntitySave($entity, $form, 'edit', $objectId, $isClone)) {
                         $model->saveEntity($entity, $this->getFormButton($form, ['buttons', 'save'])->isClicked());
 
                         $this->afterEntitySave($entity, $form, 'edit', $valid);
@@ -449,6 +450,7 @@ abstract class AbstractStandardFormController extends AbstractFormController
                 $action = $this->generateUrl($this->getActionRoute(), ['objectAction' => 'edit', 'objectId' => $entity->getId()]);
                 $form   = $model->createForm($entity, $this->formFactory, $action);
                 $this->beforeFormProcessed($entity, $form, 'edit', false, $isClone);
+                $this->setOptimisticLockVersion($entity, $form);
             }
         } elseif (!$isClone) {
             $model->lockEntity($entity);
@@ -671,7 +673,7 @@ abstract class AbstractStandardFormController extends AbstractFormController
         ];
 
         foreach ($namespaces as $namespace) {
-            if ($this->get('twig')->getLoader()->exists($namespace.'/'.$file)) {
+            if ($this->container->get('twig')->getLoader()->exists($namespace.'/'.$file)) {
                 return $namespace.'/'.$file;
             }
         }
@@ -762,7 +764,7 @@ abstract class AbstractStandardFormController extends AbstractFormController
     {
         $name            = $this->getSessionBase($objectId).'.view.daterange';
         $method          = ('POST' === $request->getMethod()) ? 'request' : 'query';
-        $dateRangeValues = $request->$method->get('daterange', $request->getSession()->get($name, []));
+        $dateRangeValues = $request->$method->all()['daterange'] ?? $request->getSession()->get($name, []);
         $request->getSession()->set($name, $dateRangeValues);
 
         $dateRangeForm = $this->formFactory->create(DateRangeType::class, $dateRangeValues, ['action' => $returnUrl]);
@@ -1131,5 +1133,53 @@ abstract class AbstractStandardFormController extends AbstractFormController
     protected function getDataForExport(AbstractCommonModel $model, array $args, callable $resultsCallback = null, ?int $start = 0)
     {
         return parent::getDataForExport($model, $args, $resultsCallback, $start);
+    }
+
+    /**
+     * If the $entity supports optimistic locking, entity's current version is set to the $form for a later comparison.
+     *
+     * @param mixed $entity
+     */
+    protected function setOptimisticLockVersion($entity, FormInterface $form): void
+    {
+        if (!$entity instanceof OptimisticLockInterface) {
+            return;
+        }
+
+        $form->get($entity->getVersionField())
+            ->setData($entity->getVersion());
+    }
+
+    /**
+     * If the $entity supports optimistic locking, entity's current version is compared to the value in the $form.
+     *
+     * @param mixed $entity
+     */
+    protected function checkOptimisticLockVersion($entity, FormInterface $form, bool $isClone): bool
+    {
+        if ($isClone || !$entity instanceof OptimisticLockInterface) {
+            return true;
+        }
+
+        $version = (int) $form->get($entity->getVersionField())
+            ->getData();
+
+        if (!$version) {
+            throw new \LogicException(sprintf('A version is required for entities that implement "%s"', OptimisticLockInterface::class));
+        }
+
+        if ($version !== $entity->getVersion()) {
+            $form->addError(
+                new FormError(
+                    $this->translator->trans('mautic.core.optimistic_lock.changed_by_someone_else_error')
+                )
+            );
+
+            return false;
+        }
+
+        $entity->markForVersionIncrement();
+
+        return true;
     }
 }

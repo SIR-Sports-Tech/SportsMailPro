@@ -64,7 +64,7 @@ class TrackableModel extends AbstractCommonModel
         Translator $translator,
         UserHelper $userHelper,
         LoggerInterface $mauticLogger,
-        CoreParametersHelper $coreParametersHelper
+        CoreParametersHelper $coreParametersHelper,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $mauticLogger, $coreParametersHelper);
     }
@@ -203,7 +203,7 @@ class TrackableModel extends AbstractCommonModel
     /**
      * Returns a list of tokens and/or URLs that should not be converted to trackables.
      *
-     * @param mixed|null $content
+     * @param string|string[]|null $content
      */
     public function getDoNotTrackList($content): array
     {
@@ -219,11 +219,15 @@ class TrackableModel extends AbstractCommonModel
     /**
      * Extract URLs from content and return as trackables.
      *
-     * @param mixed      $content
-     * @param bool|false $usingClickthrough Set to false if not using a clickthrough parameter. This is to ensure that URLs are built correctly with ?
-     *                                      or & for URLs tracked that include query parameters
+     * @param string|string[] $content
+     * @param string[]        $contentTokens
+     * @param ?string         $channel
+     * @param ?int            $channelId
+     * @param bool            $usingClickthrough Set to false if not using a clickthrough parameter.
+     *                                           This is to ensure that URLs are built correctly with ? or & for
+     *                                           URLs tracked that include query parameters
      *
-     * @return array{0: mixed, 1: array<int|string, Redirect|Trackable>}
+     * @return array{string|string[],Redirect[]|Trackable[]}
      */
     public function parseContentForTrackables($content, array $contentTokens = [], $channel = null, $channelId = null, $usingClickthrough = true): array
     {
@@ -299,8 +303,12 @@ class TrackableModel extends AbstractCommonModel
         if ('html' == $type) {
             // For HTML, replace only the links; leaving the link text (if a URL) intact
             foreach ($this->contentReplacements['second_pass'] as $search => $replace) {
+                // Make the search regular expression match both "&" and "&amp;".
+                $search  = preg_quote($search, '/');
+                $search  = str_replace('&amp;', '&', $search);
+                $search  = str_replace('&', '(?:&|&amp;)', $search);
                 $content = preg_replace(
-                    '/<(.*?) href=(["\'])'.preg_quote($search, '/').'(.*?)\\2(.*?)>/i',
+                    '/<(.*?) href=(["\'])'.$search.'(.*?)\\2(.*?)>/i',
                     '<$1 href=$2'.$replace.'$3$2$4>',
                     $content
                 );
@@ -588,13 +596,11 @@ class TrackableModel extends AbstractCommonModel
 
             parse_str($query, $queryParts);
 
-            if (is_array($queryParts)) {
-                foreach ($queryParts as $key => $value) {
-                    if (preg_match('/(\{\S+?\})/', $key) || preg_match('/(\{\S+?\})/', $value)) {
-                        $tokenizedParams[$key] = $value;
-                    } else {
-                        $untokenizedParams[$key] = $value;
-                    }
+            foreach ($queryParts as $key => $value) {
+                if (preg_match('/(\{\S+?\})/', $key) || preg_match('/(\{\S+?\})/', $value)) {
+                    $tokenizedParams[$key] = $value;
+                } else {
+                    $untokenizedParams[$key] = $value;
                 }
             }
         }
@@ -783,7 +789,7 @@ class TrackableModel extends AbstractCommonModel
     }
 
     /**
-     * @param array<int, Redirect|Trackable> $trackableTokens
+     * @param array<int|string, Redirect|Trackable> $trackableTokens
      *
      * @return string
      */

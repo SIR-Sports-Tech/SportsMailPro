@@ -47,8 +47,8 @@ class DynamicListType extends AbstractType
                 'remove_onclick'  => 'Mautic.removeFormListOption(this);',
                 'option_required' => true,
                 'option_notblank' => true,
-                'remove_icon'     => 'fa fa-times',
-                'sortable'        => 'fa fa-ellipsis-v handle',
+                'remove_icon'     => 'ri-close-line',
+                'sortable'        => 'ri-more-2-line handle',
                 'label'           => false,
                 'entry_options'   => [
                     'label'    => false,
@@ -95,12 +95,12 @@ class DynamicListType extends AbstractType
         );
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'dynamiclist';
     }
 
-    public function getParent()
+    public function getParent(): ?string
     {
         return CollectionType::class;
     }

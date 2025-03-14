@@ -17,6 +17,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
@@ -187,7 +188,7 @@ class ThemeHelperTest extends TestCase
         $this->themeHelper->setDefaultTheme('nature');
 
         $template = $this->themeHelper->checkForTwigTemplate('@themes/goldstar/html/page.html.twig');
-        $this->assertEquals('@themes/aurora/html/page.html.twig', $template);
+        $this->assertEquals('@themes/_1-2-1-2-column/html/page.html.twig', $template);
     }
 
     public function testThemeFallbackToNextBestIfTemplateIsMissingForBothRequestedAndDefaultThemes(): void
@@ -230,7 +231,7 @@ class ThemeHelperTest extends TestCase
     public function testCopyWithNoNewDirName(): void
     {
         $themeHelper = new ThemeHelper(
-            new class() extends PathsHelper {
+            new class extends PathsHelper {
                 public function __construct()
                 {
                 }
@@ -243,17 +244,17 @@ class ThemeHelperTest extends TestCase
                 }
             },
             new Environment(new FilesystemLoader()),
-            new class() extends Translator {
+            new class extends Translator {
                 public function __construct()
                 {
                 }
             },
-            new class() extends CoreParametersHelper {
+            new class extends CoreParametersHelper {
                 public function __construct()
                 {
                 }
             },
-            new class() extends Filesystem {
+            new class extends Filesystem {
                 public function __construct()
                 {
                 }
@@ -293,26 +294,24 @@ class ThemeHelperTest extends TestCase
                     Assert::assertSame('{"name":"New Theme Name"}', $content);
                 }
             },
-            new class() extends Finder {
-                /**
-                 * @var \SplFileInfo[]
-                 */
+            new class extends Finder {
+                /** @var SplFileInfo[] */
                 private array $dirs = [];
 
                 public function __construct()
                 {
                 }
 
-                public function in($dirs)
+                public function in($dirs): static
                 {
                     $this->dirs = [
-                        new \SplFileInfo('origin-template-dir'),
+                        new SplFileInfo('origin-template-dir', 'origin-template-dir', 'origin-template-dir'),
                     ];
 
                     return $this;
                 }
 
-                public function getIterator()
+                public function getIterator(): \Iterator
                 {
                     return new \ArrayIterator($this->dirs);
                 }
@@ -326,7 +325,7 @@ class ThemeHelperTest extends TestCase
     public function testCopyWithNewDirName(): void
     {
         $themeHelper = new ThemeHelper(
-            new class() extends PathsHelper {
+            new class extends PathsHelper {
                 public function __construct()
                 {
                 }
@@ -339,17 +338,17 @@ class ThemeHelperTest extends TestCase
                 }
             },
             new Environment(new FilesystemLoader()),
-            new class() extends Translator {
+            new class extends Translator {
                 public function __construct()
                 {
                 }
             },
-            new class() extends CoreParametersHelper {
+            new class extends CoreParametersHelper {
                 public function __construct()
                 {
                 }
             },
-            new class() extends Filesystem {
+            new class extends Filesystem {
                 public function __construct()
                 {
                 }
@@ -357,7 +356,7 @@ class ThemeHelperTest extends TestCase
                 /**
                  * @param string $files
                  */
-                public function exists($files)
+                public function exists($files): bool
                 {
                     if ('/path/to/themes/requested-theme-dir' === $files) {
                         return false;
@@ -389,9 +388,9 @@ class ThemeHelperTest extends TestCase
                     Assert::assertSame('{"name":"New Theme Name"}', $content);
                 }
             },
-            new class() extends Finder {
+            new class extends Finder {
                 /**
-                 * @var \SplFileInfo[]
+                 * @var SplFileInfo[]
                  */
                 private array $dirs = [];
 
@@ -399,16 +398,16 @@ class ThemeHelperTest extends TestCase
                 {
                 }
 
-                public function in($dirs)
+                public function in($dirs): static
                 {
                     $this->dirs = [
-                        new \SplFileInfo('origin-template-dir'),
+                        new SplFileInfo('origin-template-dir', 'origin-template-dir', 'origin-template-dir'),
                     ];
 
                     return $this;
                 }
 
-                public function getIterator()
+                public function getIterator(): \Iterator
                 {
                     return new \ArrayIterator($this->dirs);
                 }
@@ -538,40 +537,53 @@ class ThemeHelperTest extends TestCase
 
     public function testGetCurrentThemeWillReturnCodeModeIfTheThemeIsCodeMode(): void
     {
+        $this->pathsHelper->method('getSystemPath')
+            ->willReturn(__DIR__.'/resource/themes');
+
+        Assert::assertTrue($this->themeHelper->exists('theme-legacy-email'));
+    }
+
+    public function testExistsReturnsFalseIfThemeDoesNotExist(): void
+    {
+        $this->pathsHelper->method('getSystemPath')
+            ->willReturn(__DIR__.'/resource/themes');
+
+        Assert::assertFalse($this->themeHelper->exists('theme-legacy-email-foo'));
+    }
+
+    public function testDefaultThemeNotShouldNotGetRemoved(): void
+    {
+        $this->pathsHelper->method('getSystemPath')
+            ->willReturn(__DIR__.'/resource/themes');
+
+        $filesystem = $this->createMock(Filesystem::class);
+        $filesystem->expects($this->exactly(5))
+            ->method('exists')
+            ->willReturnOnConsecutiveCalls(true, true, true, true, true);
+
+        $filesystem->method('readFile')->willReturn('{"name": "Test Theme"}');
+
         $themeHelper = new ThemeHelper(
-            new class() extends PathsHelper {
-                public function __construct()
-                {
-                }
-            },
-            new Environment(new FilesystemLoader()),
-            new class() extends Translator {
-                public function __construct()
-                {
-                }
-            },
-            new class() extends CoreParametersHelper {
-                public function __construct()
-                {
-                }
-            },
-            new class() extends Filesystem {
-                public function __construct()
-                {
-                }
-            },
-            new class() extends Finder {
-                public function __construct()
-                {
-                }
-            },
-            new class() extends BuilderIntegrationsHelper {
-                public function __construct()
-                {
-                }
-            }
+            $this->pathsHelper,
+            $this->twig,
+            $this->translator,
+            $this->coreParameterHelper,
+            $filesystem,
+            new Finder(),
+            $this->builderIntegrationsHelper
         );
 
-        Assert::assertSame('mautic_code_mode', $themeHelper->getCurrentTheme('mautic_code_mode', 'foo'));
+        // custom theme name - theme-legacy-email
+        $themeHelper->delete('theme-legacy-email');
+        Assert::assertTrue($themeHelper->exists('theme-legacy-email'));
+    }
+
+    public function testDeleteThemeThrowsExceptionIfThemeDoesNotExist(): void
+    {
+        $this->pathsHelper->method('getSystemPath')
+            ->willReturn(__DIR__.'/resource/themes');
+
+        $this->expectException(FileNotFoundException::class);
+        $this->themeHelper->delete('theme-legacy-email-foo');
     }
 }

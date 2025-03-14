@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class MobileNotificationSendType extends AbstractType
 {
     public function __construct(
-        protected RouterInterface $router
+        protected RouterInterface $router,
     ) {
     }
 
@@ -57,7 +57,7 @@ class MobileNotificationSendType extends AbstractType
                         'onclick' => 'Mautic.loadNewWindow({
                             "windowUrl": "'.$windowUrl.'"
                         })',
-                        'icon' => 'fa fa-plus',
+                        'icon' => 'ri-add-line',
                     ],
                     'label' => 'mautic.notification.send.new.notification',
                 ]
@@ -85,7 +85,7 @@ class MobileNotificationSendType extends AbstractType
                         'class'    => 'btn btn-primary btn-nospin',
                         'onclick'  => 'Mautic.loadNewWindow(Mautic.standardNotificationUrl({"windowUrl": "'.$windowUrlEdit.'"}))',
                         'disabled' => !isset($notification),
-                        'icon'     => 'fa fa-edit',
+                        'icon'     => 'ri-edit-line',
                     ],
                     'label' => 'mautic.notification.send.edit.notification',
                 ]
@@ -98,10 +98,7 @@ class MobileNotificationSendType extends AbstractType
         $resolver->setDefined(['update_select']);
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'mobilenotificationsend_list';
     }

@@ -4,19 +4,48 @@ namespace Mautic\CampaignBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\ApiBundle\Serializer\Driver\ApiMetadataDriver;
 use Mautic\CoreBundle\Doctrine\Mapping\ClassMetadataBuilder;
 use Mautic\CoreBundle\Entity\FormEntity;
+use Mautic\CoreBundle\Entity\OptimisticLockInterface;
+use Mautic\CoreBundle\Entity\OptimisticLockTrait;
 use Mautic\CoreBundle\Entity\PublishStatusIconAttributesInterface;
+use Mautic\CoreBundle\Entity\UuidInterface;
+use Mautic\CoreBundle\Entity\UuidTrait;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Entity\Lead as Contact;
 use Mautic\LeadBundle\Entity\LeadList;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
-class Campaign extends FormEntity implements PublishStatusIconAttributesInterface
+/**
+ * @ApiResource(
+ *   attributes={
+ *     "security"="false",
+ *     "normalization_context"={
+ *       "groups"={
+ *         "campaign:read"
+ *        },
+ *       "swagger_definition_name"="Read",
+ *       "api_included"={"category", "events", "lists", "forms", "fields", "actions"}
+ *     },
+ *     "denormalization_context"={
+ *       "groups"={
+ *         "campaign:write"
+ *       },
+ *       "swagger_definition_name"="Write"
+ *     }
+ *   }
+ * )
+ */
+class Campaign extends FormEntity implements PublishStatusIconAttributesInterface, OptimisticLockInterface, UuidInterface
 {
+    use UuidTrait;
+
+    use OptimisticLockTrait;
+
     public const TABLE_NAME = 'campaigns';
     /**
      * @var int
@@ -51,22 +80,22 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     private $category;
 
     /**
-     * @var ArrayCollection<int, \Mautic\CampaignBundle\Entity\Event>
+     * @var ArrayCollection<int, Event>
      */
     private $events;
 
     /**
-     * @var ArrayCollection<int, \Mautic\CampaignBundle\Entity\Lead>
+     * @var ArrayCollection<int, Lead>
      */
     private $leads;
 
     /**
-     * @var ArrayCollection<int, \Mautic\LeadBundle\Entity\LeadList>
+     * @var ArrayCollection<int, LeadList>
      */
     private $lists;
 
     /**
-     * @var ArrayCollection<int, \Mautic\FormBundle\Entity\Form>
+     * @var ArrayCollection<int, Form>
      */
     private $forms;
 
@@ -143,6 +172,9 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
 
         $builder->addNamedField('allowRestart', 'boolean', 'allow_restart');
         $builder->addNullableField('deleted', 'datetime');
+
+        self::addVersionField($builder);
+        static::addUuidField($builder);
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
@@ -394,9 +426,36 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     }
 
     /**
+     * @return ArrayCollection<int, Event>
+     */
+    public function getEmailSendEvents(): ArrayCollection
+    {
+        $criteria = Criteria::create()->where(Criteria::expr()->eq('type', 'email.send'));
+        $events   = $this->getEvents()->matching($criteria);
+
+        // Doctrine loses the indexBy mapping definition when using matching so we have to manually reset them.
+        // @see https://github.com/doctrine/doctrine2/issues/4693
+        $keyedArrayCollection = new ArrayCollection();
+        /** @var Event $event */
+        foreach ($events as $event) {
+            $keyedArrayCollection->set($event->getId(), $event);
+        }
+
+        return $keyedArrayCollection;
+    }
+
+    public function isEmailCampaign(): bool
+    {
+        $criteria     = Criteria::create()->where(Criteria::expr()->eq('type', 'email.send'))->setMaxResults(1);
+        $emailEvent   = $this->getEvents()->matching($criteria);
+
+        return !$emailEvent->isEmpty();
+    }
+
+    /**
      * Set publishUp.
      *
-     * @param \DateTime $publishUp
+     * @param ?\DateTime $publishUp
      *
      * @return Campaign
      */
@@ -421,7 +480,7 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     /**
      * Set publishDown.
      *
-     * @param \DateTimeInterface $publishDown
+     * @param ?\DateTime $publishDown
      *
      * @return Campaign
      */
@@ -616,10 +675,8 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     {
         return $this->leads->matching(
             Criteria::create()
-                    ->where(
-                        Criteria::expr()->eq('lead', $contact)
-                    )
-                    ->orderBy(['dateAdded' => Criteria::DESC])
+                ->where(Criteria::expr()->eq('lead', $contact))
+                ->orderBy(['dateAdded' => Order::Descending->value])
         );
     }
 

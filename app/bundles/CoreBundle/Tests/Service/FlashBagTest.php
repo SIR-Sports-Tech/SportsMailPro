@@ -15,27 +15,27 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class FlashBagTest extends TestCase
 {
     /**
-     * @var MockObject|SymfonyFlashBag
+     * @var MockObject&SymfonyFlashBag
      */
     private MockObject $symfonyFlashBag;
 
     /**
-     * @var MockObject|Session
+     * @var MockObject&Session
      */
     private MockObject $session;
 
     /**
-     * @var MockObject|TranslatorInterface
+     * @var MockObject&TranslatorInterface
      */
     private MockObject $translator;
 
     /**
-     * @var MockObject|RequestStack
+     * @var MockObject&RequestStack
      */
     private MockObject $requestStack;
 
     /**
-     * @var NotificationModel|MockObject
+     * @var NotificationModel&MockObject
      */
     private MockObject $notificationModel;
 
@@ -43,17 +43,16 @@ class FlashBagTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->symfonyFlashBag  = $this->createMock(SymfonyFlashBag::class);
-
-        $this->session = $this->createMock(Session::class);
-        $this->session
-            ->expects($this->once())
-            ->method('getFlashBag')
-            ->willReturn($this->symfonyFlashBag);
+        $this->symfonyFlashBag   = $this->createMock(SymfonyFlashBag::class);
+        $this->session           = $this->createMock(Session::class);
         $this->translator        = $this->createMock(TranslatorInterface::class);
         $this->requestStack      = $this->createMock(RequestStack::class);
         $this->notificationModel = $this->createMock(NotificationModel::class);
-        $this->flashBag          = new FlashBag($this->session, $this->translator, $this->requestStack, $this->notificationModel);
+
+        $this->session->method('getFlashBag')->willReturn($this->symfonyFlashBag);
+        $this->requestStack->method('getSession')->willReturn($this->session);
+
+        $this->flashBag = new FlashBag($this->translator, $this->requestStack, $this->notificationModel);
 
         parent::setUp();
     }
@@ -147,17 +146,17 @@ class FlashBagTest extends TestCase
 
     public function testAddTypeError(): void
     {
-        $this->assertAddTypeCases(FlashBag::LEVEL_ERROR, 'text-danger fa-exclamation-circle');
+        $this->assertAddTypeCases(FlashBag::LEVEL_ERROR, 'text-danger ri-error-warning-line-circle');
     }
 
     public function testAddTypeNotice(): void
     {
-        $this->assertAddTypeCases(FlashBag::LEVEL_NOTICE, 'fa-info-circle');
+        $this->assertAddTypeCases(FlashBag::LEVEL_NOTICE, 'ri-information-2-line');
     }
 
     public function testAddTypeDefault(): void
     {
-        $this->assertAddTypeCases('default', 'fa-info-circle');
+        $this->assertAddTypeCases('default', 'ri-information-2-line');
     }
 
     private function assertReadStatus(int $mauticUserLastActive, bool $isRead): void
@@ -200,7 +199,7 @@ class FlashBagTest extends TestCase
         $this->notificationModel
             ->expects($this->once())
             ->method('addNotification')
-            ->with($message, $level, $isRead, null, 'fa-info-circle');
+            ->with($message, $level, $isRead, null, 'ri-information-2-line');
 
         $this->flashBag->add($message, $messageVars, $level, $domain, $addNotification);
     }

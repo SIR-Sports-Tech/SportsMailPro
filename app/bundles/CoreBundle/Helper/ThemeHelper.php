@@ -8,12 +8,16 @@ use Mautic\CoreBundle\Exception\FileNotFoundException;
 use Mautic\CoreBundle\Twig\Helper\ThemeHelper as twigThemeHelper;
 use Mautic\IntegrationsBundle\Exception\IntegrationNotFoundException;
 use Mautic\IntegrationsBundle\Helper\BuilderIntegrationsHelper;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 class ThemeHelper implements ThemeHelperInterface
 {
+    public const HIDDEN_THEMES_TXT = 'hidden-themes.txt';
+
     /**
      * @var array<string, mixed[]>
      */
@@ -48,22 +52,41 @@ class ThemeHelper implements ThemeHelperInterface
      * @var string[]
      */
     protected $defaultThemes = [
-        'Mauve',
+        '_1-2-1-2-column',
+        '_1-2-1-column',
+        '_1-2-column',
+        '_1-3-1-3-column',
+        '_1-3-column',
+        '_connect-through-content',
+        '_educate',
+        '_gallery',
+        '_make-announcement',
+        '_showcase',
+        '_simple-text',
+        '_survey',
+        '_welcome',
+        'attract',
         'aurora',
         'blank',
+        'blend',
         'brienz',
+        'capture',
         'cards',
-        'coffee',
+        'chord',
         'confirmme',
+        'creative',
+        'eclipse',
+        'formscape',
         'fresh-center',
         'fresh-fixed',
         'fresh-left',
         'fresh-wide',
         'goldstar',
-        'nature',
+        'mono',
         'neopolitan',
         'oxygen',
         'paprika',
+        'reachout',
         'skyline',
         'sparse',
         'sunday',
@@ -72,6 +95,11 @@ class ThemeHelper implements ThemeHelperInterface
         'vibrant',
     ];
 
+    /**
+     * @var array<int, string>
+     */
+    private array $hiddenThemes = [];
+
     public function __construct(
         private PathsHelper $pathsHelper,
         private Environment $twig,
@@ -79,7 +107,7 @@ class ThemeHelper implements ThemeHelperInterface
         private CoreParametersHelper $coreParametersHelper,
         Filesystem $filesystem,
         Finder $finder,
-        private BuilderIntegrationsHelper $builderIntegrationsHelper
+        private BuilderIntegrationsHelper $builderIntegrationsHelper,
     ) {
         $this->filesystem                = clone $filesystem;
         $this->finder                    = clone $finder;
@@ -88,6 +116,14 @@ class ThemeHelper implements ThemeHelperInterface
     public function getDefaultThemes()
     {
         return $this->defaultThemes;
+    }
+
+    /**
+     * @param string[] $themes
+     */
+    public function addDefaultThemes(array $themes): void
+    {
+        $this->defaultThemes = array_merge($this->defaultThemes, $themes);
     }
 
     public function setDefaultTheme($defaultTheme): void
@@ -114,7 +150,7 @@ class ThemeHelper implements ThemeHelperInterface
         return InputHelper::filename(str_replace(' ', '-', $newName));
     }
 
-    public function exists($theme)
+    public function exists($theme): bool
     {
         $root    = $this->pathsHelper->getSystemPath('themes', true).'/';
         $dirName = $this->getDirectoryName($theme);
@@ -172,6 +208,12 @@ class ThemeHelper implements ThemeHelperInterface
         // check to make sure the theme exists
         if (!isset($themes[$theme])) {
             throw new FileNotFoundException($theme.' not found!');
+        }
+
+        if (in_array($theme, $this->getDefaultThemes(), true)) {
+            $this->addToHidden($theme);
+
+            return;
         }
 
         $this->filesystem->remove($root.$theme);
@@ -275,7 +317,7 @@ class ThemeHelper implements ThemeHelperInterface
         return $this->themeHelpers[$theme];
     }
 
-    public function install($zipFile)
+    public function install($zipFile): bool
     {
         if (false === $this->filesystem->exists($zipFile)) {
             throw new FileNotFoundException();
@@ -469,7 +511,13 @@ class ThemeHelper implements ThemeHelperInterface
             if (empty($config['builder']) || !is_array($config['builder'])) {
                 $config['builder'] = ['legacy'];
             }
-            $this->themesInfo[$key][$theme->getBasename()]['config'] = $config;
+
+            $this->themesInfo[$key][$theme->getBasename()]['config']     = $config;
+            $this->themesInfo[$key][$theme->getBasename()]['visibility'] = $this->getVisibility($theme);
+
+            if (empty($this->themesInfo[$key][$theme->getBasename()]['visibility'])) {
+                unset($this->themesInfo[$key][$theme->getBasename()]['visibility']);
+            }
 
             if (!$includeDirs) {
                 continue;
@@ -478,6 +526,8 @@ class ThemeHelper implements ThemeHelperInterface
             $this->themesInfo[$key][$theme->getBasename()]['dir']            = $theme->getRealPath();
             $this->themesInfo[$key][$theme->getBasename()]['themesLocalDir'] = $this->pathsHelper->getSystemPath('themes');
         }
+
+        $this->sortThemesInfo($key);
     }
 
     private function shouldLoadTheme(array $config, string $featureRequested): bool
@@ -519,5 +569,109 @@ class ThemeHelper implements ThemeHelperInterface
         }
 
         return $template;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    private function getHiddenThemes(): array
+    {
+        if (count($this->hiddenThemes)) {
+            return $this->hiddenThemes;
+        }
+
+        if (!$this->filesystem->exists($hidden = $this->pathsHelper->getThemesPath().'/'.self::HIDDEN_THEMES_TXT)) {
+            return [];
+        }
+
+        return $this->hiddenThemes = array_map(fn ($item) => trim($item), explode('|', $this->filesystem->readFile($hidden)));
+    }
+
+    /**
+     * @throws IOException
+     */
+    private function addToHidden(string $theme): void
+    {
+        $hidden = $this->createHiddenTxtIfNotExists();
+        $this->filesystem->appendToFile($hidden, sprintf('|%s', $theme));
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function getVisibility(SplFileInfo $theme): array
+    {
+        $themeName = $theme->getBasename();
+
+        if (!in_array($themeName, $this->defaultThemes, true)) {
+            return [];
+        }
+
+        return ['hidden' => in_array($themeName, $this->getHiddenThemes(), true)];
+    }
+
+    /**
+     * @throws IOException
+     */
+    public function toggleVisibility(string $themeName): void
+    {
+        if (!in_array($themeName, $this->getDefaultThemes(), true)) {
+            return;
+        }
+
+        $hidden       = $this->createHiddenTxtIfNotExists();
+        $hiddenThemes = array_values(array_filter(array_unique(explode('|', $this->filesystem->readFile($hidden)))));
+
+        if (in_array($themeName, $hiddenThemes, true)) {
+            $this->removeFromHidden($themeName, $hiddenThemes);
+        } else {
+            $this->addToHidden($themeName);
+        }
+    }
+
+    private function sortThemesInfo(string $key): void
+    {
+        $hiddenThemes = [];
+        $themes       = [];
+
+        foreach ($this->themesInfo[$key] as $data) {
+            if (isset($data['visibility']['hidden']) && $data['visibility']['hidden']) {
+                $hiddenThemes[$key][$data['key']] = $data;
+            } else {
+                $themes[$key][$data['key']] = $data;
+            }
+        }
+
+        $this->themesInfo[$key] = array_merge($themes[$key] ?? [], $hiddenThemes[$key] ?? []);
+    }
+
+    private function createHiddenTxtIfNotExists(): string
+    {
+        if (!$this->filesystem->exists($hidden = $this->pathsHelper->getThemesPath().'/'.self::HIDDEN_THEMES_TXT)) {
+            $this->filesystem->touch($hidden);
+        }
+
+        return $hidden;
+    }
+
+    /**
+     * @param string[] $hiddenThemes
+     *
+     * @throws IOException
+     */
+    private function removeFromHidden(string $themeName, array $hiddenThemes): void
+    {
+        $hidden      = $this->createHiddenTxtIfNotExists();
+        $keyToRemove = array_search($themeName, $hiddenThemes, true);
+
+        if (false !== $keyToRemove) {
+            unset($hiddenThemes[$keyToRemove]);
+
+            if (empty($hiddenThemes)) {
+                $this->filesystem->remove($hidden);
+            } else {
+                $this->filesystem->dumpFile($hidden, sprintf('|%s', implode('|', $hiddenThemes)));
+            }
+        }
     }
 }

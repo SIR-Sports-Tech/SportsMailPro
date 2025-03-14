@@ -30,7 +30,7 @@ class FieldType extends AbstractType
         private TranslatorInterface $translator,
         private ObjectCollectorInterface $objectCollector,
         private FieldCollectorInterface $fieldCollector,
-        private AlreadyMappedFieldCollectorInterface $mappedFieldCollector
+        private AlreadyMappedFieldCollectorInterface $mappedFieldCollector,
     ) {
     }
 
@@ -388,6 +388,22 @@ class FieldType extends AbstractType
                     ],
                 ]
             );
+
+            $isReadOnlyValue = (bool) ($options['data']['isReadOnly'] ?? false);
+            $builder->add(
+                'isReadOnly',
+                YesNoButtonGroupType::class,
+                [
+                    'label' => 'mautic.form.field.form.read_only',
+                    'data'  => $isReadOnlyValue,
+                    'attr'  => [
+                        'class'           => 'read-only-data',
+                        'tooltip'         => 'mautic.form.field.help.auto_fill',
+                        'data-disable-on' => '{"formfield_isAutoFill_0": "checked"}',
+                        'data-enable-on'  => '{"formfield_isAutoFill_1": "checked"}',
+                    ],
+                ]
+            );
         }
 
         if ($addMappedFieldList) {
@@ -437,7 +453,7 @@ class FieldType extends AbstractType
                         'tooltip' => 'mautic.form.field.help.mapped.field',
                     ],
                     'required' => false,
-                    'data'     => $mappedField ?? $this->getDefaultMappedField((string) $type),
+                    'data'     => $mappedField ?? (empty($options['data']['id']) ? $this->getDefaultMappedField((string) $type) : ''),
                 ]
             );
 
@@ -457,10 +473,10 @@ class FieldType extends AbstractType
         $update = (!empty($options['data']['id'])) ? true : false;
         if (!empty($update)) {
             $btnValue = 'mautic.core.form.update';
-            $btnIcon  = 'fa fa-pencil';
+            $btnIcon  = 'ri-edit-line';
         } else {
             $btnValue = 'mautic.core.form.add';
-            $btnIcon  = 'fa fa-plus';
+            $btnIcon  = 'ri-add-line';
         }
 
         $builder->add(
@@ -537,9 +553,18 @@ class FieldType extends AbstractType
                         ]
                     );
                     break;
+                case 'number':
+                    $builder->add(
+                        'properties',
+                        FormFieldNumberType::class,
+                        [
+                            'label' => false,
+                            'data'  => $propertiesData,
+                        ]
+                    );
+                    break;
                 case 'date':
                 case 'email':
-                case 'number':
                 case 'text':
                 case 'url':
                 case 'tel':
@@ -606,7 +631,7 @@ class FieldType extends AbstractType
         $resolver->setDefined(['customParameters']);
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'formfield';
     }
@@ -614,10 +639,11 @@ class FieldType extends AbstractType
     private function getDefaultMappedField(string $type): string
     {
         return match ($type) {
-            'email'   => 'email',
-            'country' => 'country',
-            'tel'     => 'phone',
-            default   => '',
+            'email'         => 'email',
+            'country'       => 'country',
+            'tel'           => 'phone',
+            'companyLookup' => 'company',
+            default         => '',
         };
     }
 }

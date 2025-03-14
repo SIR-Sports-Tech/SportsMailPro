@@ -18,11 +18,21 @@ class DynamicContentHelper
 {
     use MatchFilterForLeadTrait;
 
+    /**
+     * @const DYNAMIC_CONTENT_REGEX
+     */
+    public const DYNAMIC_CONTENT_REGEX = '/{(dynamiccontent)=(\w+)(?:\/}|}(?:([^{]*(?:{(?!\/\1})[^{]*)*){\/\1})?)/is';
+
+    /**
+     * @const DYNAMIC_WEB_CONTENT_REGEX
+     */
+    public const DYNAMIC_WEB_CONTENT_REGEX = '/{dwc=(.*?)}/';
+
     public function __construct(
         protected DynamicContentModel $dynamicContentModel,
         protected RealTimeExecutioner $realTimeExecutioner,
         protected EventDispatcherInterface $dispatcher,
-        protected LeadModel $leadModel
+        protected LeadModel $leadModel,
     ) {
     }
 

@@ -38,12 +38,12 @@ final class TypeOperatorSubscriberTest extends \PHPUnit\Framework\TestCase
     private MockObject $listModel;
 
     /**
-     * @var MockObject&campaignModel
+     * @var MockObject&CampaignModel
      */
     private MockObject $campaignModel;
 
     /**
-     * @var MockObject&emailModel
+     * @var MockObject&EmailModel
      */
     private MockObject $emailModel;
 
@@ -121,8 +121,9 @@ final class TypeOperatorSubscriberTest extends \PHPUnit\Framework\TestCase
         $this->assertNotContains(OperatorOptions::IN, $operators['text']['include']);
         $this->assertContains(OperatorOptions::EQUAL_TO, $operators['boolean']['include']);
         $this->assertNotContains(OperatorOptions::IN, $operators['boolean']['include']);
-        $this->assertContains(OperatorOptions::IN, $operators['date']['exclude']);
-        $this->assertNotContains(OperatorOptions::EQUAL_TO, $operators['date']['exclude']);
+        $this->assertNotContains(OperatorOptions::IN, $operators['date']['include']);
+        $this->assertContains(OperatorOptions::EQUAL_TO, $operators['date']['include']);
+        $this->assertContains(OperatorOptions::DATE, $operators['date']['include']);
         $this->assertContains(OperatorOptions::EQUAL_TO, $operators['number']['include']);
         $this->assertNotContains(OperatorOptions::IN, $operators['number']['include']);
         $this->assertContains(OperatorOptions::EMPTY, $operators['country']['include']);
@@ -153,7 +154,7 @@ final class TypeOperatorSubscriberTest extends \PHPUnit\Framework\TestCase
 
         $this->categoryModel->expects($this->once())
             ->method('getLookupResults')
-            ->with('global')
+            ->with('global', '', 300)
             ->willReturn([['title' => 'Category E', 'id' => 66]]);
 
         $this->emailModel->expects($this->once())
@@ -507,10 +508,11 @@ final class TypeOperatorSubscriberTest extends \PHPUnit\Framework\TestCase
                 'filter',
                 TextType::class,
                 [
-                    'label'    => false,
-                    'attr'     => ['class' => 'form-control'],
-                    'disabled' => false,
-                    'data'     => '',
+                    'label'       => false,
+                    'attr'        => ['class' => 'form-control'],
+                    'disabled'    => false,
+                    'data'        => '',
+                    'constraints' => [],
                 ]
             );
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mautic\PointBundle\Model;
 
 use Mautic\CoreBundle\Model\FormModel as CommonFormModel;
+use Mautic\CoreBundle\Model\GlobalSearchInterface;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PointBundle\Entity\Group;
 use Mautic\PointBundle\Entity\GroupContactScore;
@@ -20,7 +21,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 /**
  * @extends CommonFormModel<Group>
  */
-class PointGroupModel extends CommonFormModel
+class PointGroupModel extends CommonFormModel implements GlobalSearchInterface
 {
     public function getRepository(): GroupRepository
     {
@@ -135,5 +136,10 @@ class PointGroupModel extends CommonFormModel
         $this->dispatcher->dispatch($scoreChangeEvent, PointGroupEvents::SCORE_CHANGE);
 
         return $contact;
+    }
+
+    public static function isAllowedPointOperation(string $operator): bool
+    {
+        return in_array($operator, [Lead::POINTS_ADD, Lead::POINTS_SUBTRACT, Lead::POINTS_MULTIPLY, Lead::POINTS_DIVIDE, Lead::POINTS_SET]);
     }
 }

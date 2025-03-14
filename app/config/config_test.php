@@ -38,8 +38,8 @@ $container->loadFromExtension('twig', [
 $container->loadFromExtension('framework', [
     'test'    => true,
     'session' => [
-        'storage_id' => 'session.storage.mock_file',
-        'name'       => 'MOCKSESSION',
+        'storage_factory_id' => 'session.storage.factory.mock_file',
+        'name'               => 'MOCKSESSION',
     ],
     'profiler' => [
         'collect' => false,
@@ -136,6 +136,10 @@ $container->register('mautic.install.fixture.lead_field', Mautic\InstallBundle\I
     ->addTag(FixturesCompilerPass::FIXTURE_TAG)
     ->setPublic(true);
 
+if (defined('IS_PHPUNIT')) {
+    $container->register('security.csrf.token_storage', Mautic\CoreBundle\Test\Session\InMemoryTokenStorage::class)->setAutowired(true);
+}
+
 // Use static namespace for token manager
 $container->register('security.csrf.token_manager', Symfony\Component\Security\Csrf\CsrfTokenManager::class)
     ->addArgument(new Reference('security.csrf.token_generator'))
@@ -147,4 +151,9 @@ $container->register('security.csrf.token_manager', Symfony\Component\Security\C
 $container->register(GuzzleHttp\Handler\MockHandler::class)->setPublic(true);
 
 $container->register('http_client', Symfony\Component\HttpClient\MockHttpClient::class)
+    ->setPublic(true);
+
+$container->register('test.service_container', Mautic\CoreBundle\Test\Container\TestContainer::class)
+    ->setArgument('$kernel', new Reference('kernel'))
+    ->setArgument('$privateServicesLocatorId', 'test.private_services_locator')
     ->setPublic(true);

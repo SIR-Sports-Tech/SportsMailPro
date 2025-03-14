@@ -13,8 +13,11 @@ use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\ListLead;
 use Mautic\UserBundle\Entity\Role;
 use Mautic\UserBundle\Entity\User;
+use PHPUnit\Framework\Assert;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\PasswordHasher\PasswordHasherInterface;
 
 class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
 {
@@ -50,6 +53,100 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
     protected function beforeBeginTransaction(): void
     {
         $this->resetAutoincrement(['categories']);
+    }
+
+    public function testCreateWithDynamicContent(): void
+    {
+        $segment = new LeadList();
+        $segment->setName('API segment');
+        $segment->setPublicName('API segment');
+        $segment->setAlias('API segment');
+
+        $this->em->persist($segment);
+        $this->em->flush();
+
+        $payload = [
+            'name'           => 'test',
+            'subject'        => 'API test email',
+            'customHtml'     => '<h1>Hi there!</h1>',
+            'emailType'      => 'list',
+            'lists'          => [$segment->getId()],
+            'dynamicContent' => [
+                [
+                    'tokenName' => 'test content name',
+                    'content'   => 'Some default <strong>content</strong>',
+                    'filters'   => [
+                        [
+                            'content' => 'Variation 1',
+                            'filters' => [],
+                        ],
+                        [
+                            'content' => 'Variation 2',
+                            'filters' => [
+                                [
+                                    'glue'     => 'and',
+                                    'field'    => 'city',
+                                    'object'   => 'lead',
+                                    'type'     => 'text',
+                                    'filter'   => 'Prague',
+                                    'display'  => null,
+                                    'operator' => '=',
+                                ],
+                                [
+                                    'glue'     => 'and',
+                                    'field'    => 'email',
+                                    'object'   => 'lead',
+                                    'type'     => 'email',
+                                    'filter'   => null, // Doesn't matter what value is here, it will be null-ed in the response for the emtpy param since PR 13526.
+                                    'display'  => null,
+                                    'operator' => '!empty',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'tokenName' => 'test content name2',
+                    'content'   => 'Some default <strong>content2</strong>',
+                    'filters'   => [
+                        [
+                            'content' => 'Variation 3',
+                            'filters' => [],
+                        ],
+                        [
+                            'content' => 'Variation 4',
+                            'filters' => [
+                                [
+                                    'glue'     => 'and',
+                                    'field'    => 'city',
+                                    'object'   => 'lead',
+                                    'type'     => 'text',
+                                    'filter'   => 'Raleigh',
+                                    'display'  => null,
+                                    'operator' => '=',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->client->request(Request::METHOD_POST, '/api/emails/new', $payload);
+        $clientResponse = $this->client->getResponse();
+        $response       = json_decode($clientResponse->getContent(), true);
+
+        Assert::assertArrayHasKey('email', $response);
+
+        $response = $response['email'];
+
+        Assert::assertSame(Response::HTTP_CREATED, $clientResponse->getStatusCode(), $clientResponse->getContent());
+        Assert::assertSame($payload['name'], $response['name']);
+        Assert::assertSame($payload['subject'], $response['subject']);
+        Assert::assertSame($payload['customHtml'], $response['customHtml']);
+        Assert::assertSame($payload['lists'][0], $response['lists'][0]['id']);
+        Assert::assertSame('API segment', $response['lists'][0]['name']);
+        Assert::assertSame($payload['dynamicContent'], $response['dynamicContent']);
     }
 
     public function testSingleEmailWorkflow(): void
@@ -97,11 +194,13 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $response['email']['lists']);
         $this->assertEquals($segmentAId, $response['email']['lists'][0]['id']);
         $this->assertEquals($payload['customHtml'], $response['email']['customHtml']);
+        $this->assertFalse($response['email']['publicPreview']);
 
         // Edit PATCH:
         $patchPayload = [
-            'name'  => 'API email renamed',
-            'lists' => [$segmentBId],
+            'name'          => 'API email renamed',
+            'lists'         => [$segmentBId],
+            'publicPreview' => true,
         ];
         $this->client->request('PATCH', "/api/emails/{$emailId}/edit", $patchPayload);
         $clientResponse = $this->client->getResponse();
@@ -115,11 +214,13 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals($segmentBId, $response['email']['lists'][0]['id']);
         $this->assertEquals($payload['emailType'], $response['email']['emailType']);
         $this->assertEquals($payload['customHtml'], $response['email']['customHtml']);
+        $this->assertEquals($patchPayload['publicPreview'], $response['email']['publicPreview']);
 
         // Edit PUT:
         $payload['subject'] .= ' renamed';
-        $payload['lists']    = [$segmentAId, $segmentBId];
-        $payload['language'] = 'en'; // Must be present for PUT as all empty values are being cleared.
+        $payload['lists']         = [$segmentAId, $segmentBId];
+        $payload['language']      = 'en'; // Must be present for PUT as all empty values are being cleared.
+        $payload['publicPreview'] = false; // Must be present for PUT as all empty values are being cleared.
         $this->client->request('PUT', "/api/emails/{$emailId}/edit", $payload);
         $clientResponse = $this->client->getResponse();
         $response       = json_decode($clientResponse->getContent(), true);
@@ -133,6 +234,7 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals($segmentBId, $response['email']['lists'][0]['id']);
         $this->assertEquals($payload['emailType'], $response['email']['emailType']);
         $this->assertEquals($payload['customHtml'], $response['email']['customHtml']);
+        $this->assertEquals($payload['publicPreview'], $response['email']['publicPreview']);
 
         // Get:
         $this->client->request('GET', "/api/emails/{$emailId}");
@@ -216,11 +318,12 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         // Get the email reply that was just created from the stat API.
         $statReplyQuery = ['where' => [['col' => 'stat_id', 'expr' => 'eq', 'val' => $stat->getId()]]];
         $this->client->request('GET', '/api/stats/email_stat_replies', $statReplyQuery);
+        $this->assertResponseIsSuccessful();
         $fetchedReplyData = json_decode($this->client->getResponse()->getContent(), true);
 
         // Check that the email reply was created correctly.
         $this->assertSame('1', $fetchedReplyData['total']);
-        $this->assertSame($stat->getId(), (int) $fetchedReplyData['stats'][0]['stat_id']);
+        $this->assertSame($stat->getId(), $fetchedReplyData['stats'][0]['stat_id']);
         $this->assertMatchesRegularExpression('/api-[a-z0-9]*/', $fetchedReplyData['stats'][0]['message_id']);
 
         // Get the email stat that was just updated from the stat API.
@@ -230,7 +333,7 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Check that the email stat was updated correctly/
         $this->assertSame('1', $fetchedStatData['total']);
-        $this->assertSame($stat->getId(), (int) $fetchedStatData['stats'][0]['id']);
+        $this->assertSame($stat->getId(), $fetchedStatData['stats'][0]['id']);
         $this->assertSame('1', $fetchedStatData['stats'][0]['is_read']);
         $this->assertMatchesRegularExpression('/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/', $fetchedStatData['stats'][0]['date_read']);
     }
@@ -250,9 +353,10 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $user->setSignature('Best regards, |FROM_NAME|');
         $user->setRole($role);
 
-        $encoder = static::getContainer()->get('security.encoder_factory')->getEncoder($user);
+        $hasher = static::getContainer()->get('security.password_hasher_factory')->getPasswordHasher($user);
+        \assert($hasher instanceof PasswordHasherInterface);
 
-        $user->setPassword($encoder->encodePassword('password', null));
+        $user->setPassword($hasher->hash('password'));
         $this->em->persist($user);
 
         // Create a contact:
@@ -327,6 +431,10 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $testEmail('{custom-token}');
 
         // Send to contact:
+        $email = $createEmail();
+        $this->em->persist($email);
+        $this->em->flush();
+        $emailId = $email->getId();
         $this->client->request('POST', "/api/emails/{$emailId}/contact/{$contactId}/send", ['tokens' => ['{custom-token}' => 'custom <b>value</b>']]);
 
         $clientResponse = $this->client->getResponse();
@@ -345,7 +453,6 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->persist($email);
         $this->em->flush();
         $emailId = $email->getId();
-
         // Send to segment:
         $this->client->request('POST', "/api/emails/{$emailId}/send");
         $clientResponse = $this->client->getResponse();
@@ -367,6 +474,12 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $testEmailOwnerAsMailer();
 
         // Send to contact:
+        $email = $createEmail();
+        $email->setUseOwnerAsMailer(true);
+        $email->setReplyToAddress(null);
+        $this->em->persist($email);
+        $this->em->flush();
+        $emailId = $email->getId();
         $this->client->request('POST', "/api/emails/{$emailId}/contact/{$contactId}/send");
         $clientResponse = $this->client->getResponse();
 
@@ -378,9 +491,12 @@ class EmailApiControllerFunctionalTest extends MauticMysqlTestCase
         $testEmailOwnerAsMailer();
 
         // Test Custom Reply-To Address
+        $email = $createEmail();
+        $email->setUseOwnerAsMailer(true);
         $email->setReplyToAddress('reply@email.domain');
         $this->em->persist($email);
         $this->em->flush();
+        $emailId = $email->getId();
 
         $this->client->request('POST', "/api/emails/{$emailId}/contact/{$contactId}/send");
         $clientResponse = $this->client->getResponse();

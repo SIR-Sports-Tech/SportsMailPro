@@ -17,7 +17,7 @@ class LeadSubscriber implements EventSubscriberInterface
         private StagesChangeLogRepository $stagesChangeLogRepository,
         private LeadStageLogRepository $leadStageLogRepository,
         private TranslatorInterface $translator,
-        private RouterInterface $router
+        private RouterInterface $router,
     ) {
     }
 
@@ -72,7 +72,7 @@ class LeadSubscriber implements EventSubscriberInterface
                         'extra'      => [
                             'log' => $log,
                         ],
-                        'icon'      => 'fa-tachometer',
+                        'icon'      => 'ri-speed-up-line',
                         'contactId' => $log['lead_id'],
                     ]
                 );

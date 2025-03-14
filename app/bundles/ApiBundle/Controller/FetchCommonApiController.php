@@ -8,13 +8,14 @@ use Doctrine\Persistence\ManagerRegistry;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\View\View;
 use JMS\Serializer\Exclusion\ExclusionStrategyInterface;
+use Mautic\ApiBundle\ApiEvents;
+use Mautic\ApiBundle\Event\ApiSerializationContextEvent;
 use Mautic\ApiBundle\Helper\BatchIdToEntityHelper;
 use Mautic\ApiBundle\Helper\EntityResultHelper;
 use Mautic\ApiBundle\Serializer\Exclusion\ParentChildrenExclusionStrategy;
 use Mautic\ApiBundle\Serializer\Exclusion\PublishDetailsExclusionStrategy;
 use Mautic\CoreBundle\Controller\FormErrorMessagesTrait;
 use Mautic\CoreBundle\Controller\MauticController;
-use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\CoreBundle\Factory\ModelFactory;
 use Mautic\CoreBundle\Form\RequestTrait;
 use Mautic\CoreBundle\Helper\AppVersion;
@@ -142,7 +143,6 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
         protected ModelFactory $modelFactory,
         protected EventDispatcherInterface $dispatcher,
         protected CoreParametersHelper $coreParametersHelper,
-        protected MauticFactory $factory,
     ) {
         $this->translator           = $translator;
 
@@ -211,7 +211,7 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
             $this->extraGetEntitiesArguments
         );
 
-        if ($select = InputHelper::cleanArray($request->get('select', []))) {
+        if ($select = InputHelper::cleanArray($request->query->all()['select'] ?? $request->request->all()['select'] ?? [])) {
             $args['select']              = $select;
             $this->customSelectRequested = true;
         }
@@ -251,7 +251,7 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
      */
     protected function getWhereFromRequest(Request $request)
     {
-        $where = InputHelper::cleanArray($request->get('where', []));
+        $where = $request->query->all()['where'] ?? [];
 
         $this->sanitizeWhereClauseArrayFromRequest($where);
 
@@ -265,7 +265,7 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
      */
     protected function getOrderFromRequest(Request $request): array
     {
-        return InputHelper::cleanArray($request->get('order', []));
+        return InputHelper::cleanArray($request->query->all()['order'] ?? []);
     }
 
     /**
@@ -679,6 +679,13 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
     protected function setSerializationContext(View $view): void
     {
         $context = $view->getContext();
+
+        if ($this->dispatcher->hasListeners(ApiEvents::API_PRE_SERIALIZATION_CONTEXT)) {
+            $apiSerializationContextEvent = new ApiSerializationContextEvent($context, $this->getCurrentRequest());
+            $this->dispatcher->dispatch($apiSerializationContextEvent, ApiEvents::API_PRE_SERIALIZATION_CONTEXT);
+            $context = $apiSerializationContextEvent->getContext();
+        }
+
         if (!empty($this->serializerGroups)) {
             $context->setGroups($this->serializerGroups);
         }
@@ -703,6 +710,12 @@ class FetchCommonApiController extends AbstractFOSRestController implements Maut
         // Include null values if a custom select has not been given
         if (!$this->customSelectRequested) {
             $context->setSerializeNull(true);
+        }
+
+        if ($this->dispatcher->hasListeners(ApiEvents::API_POST_SERIALIZATION_CONTEXT)) {
+            $apiSerializationContextEvent = new ApiSerializationContextEvent($context, $this->getCurrentRequest());
+            $this->dispatcher->dispatch($apiSerializationContextEvent, ApiEvents::API_POST_SERIALIZATION_CONTEXT);
+            $context = $apiSerializationContextEvent->getContext();
         }
 
         $view->setContext($context);

@@ -45,6 +45,8 @@ Mautic.renderCharts = function(scope) {
                     Mautic.renderSimpleBarChart(canvas)
                 } else if (canvas.hasClass('horizontal-bar-chart')) {
                     Mautic.renderHorizontalBarChart(canvas)
+                } else if (canvas.hasClass('hour-chart')) {
+                    Mautic.renderHourChart(canvas)
                 }
             }
             canvas.addClass('chart-rendered');
@@ -74,6 +76,15 @@ Mautic.renderLineChart = function(canvas) {
                 xAxes: [{
                     gridLines: {
                         display: false
+                    },
+                    ticks: {
+                        maxRotation: 0,
+                        callback: function(value, index, values) {
+                            if (index === 0 || index === values.length - 1) {
+                                return value;
+                            }
+                            return '';
+                        }
                     }
                 }],
                 yAxes: [{
@@ -108,6 +119,45 @@ Mautic.renderLineChart = function(canvas) {
     });
     Mautic.chartObjects.push(chart);
 };
+
+Mautic.renderHourChart = function(canvas) {
+    const data = JSON.parse(canvas.text());
+    const chart = new Chart(canvas, {
+        type: 'line',
+        data,
+        options: {
+            tooltips: { mode: 'index', intersect: false },
+            scales: {
+                xAxes: [{
+                    gridLines: { display: false },
+                    ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 6,
+                        maxRotation: 0,
+                        callback: value => value.split(' - ')[0]
+                    }
+                }],
+                yAxes: [{
+                    afterBuildTicks: scale => {
+                        scale.ticks = [scale.min, (scale.max - scale.min) / 2, scale.max];
+                    },
+                    gridLines: { drawBorder: false },
+                    ticks: {
+                        beginAtZero: true,
+                        callback: (value, index, values) => {
+                            if (index === 0 || index === values.length - 1) return value;
+                            if (/^\d+\.5$/.test(value.toString())) return '';
+                            if (index === Math.floor(values.length / 2)) return value !== 0.5 ? value : '';
+                            return '';
+                        }
+                    }
+                }]
+            }
+        }
+    });
+    Mautic.chartObjects.push(chart);
+};
+
 
 /**
  * Render the chart.js pie chart
@@ -263,7 +313,7 @@ Mautic.renderHorizontalBarChart = function(canvas) {
 
 /**
  * Render vector maps
- *
+ * @deprecated please use MauticMap class
  * @param mQuery element scope
  */
 Mautic.renderMaps = function(scope) {
@@ -285,7 +335,7 @@ Mautic.renderMaps = function(scope) {
 };
 
 /**
- *
+ * @deprecated please use MauticMap class
  * @param wrapper
  * @returns {*}
  */
@@ -369,6 +419,7 @@ Mautic.renderMap = function(wrapper) {
 
 /**
  * Destroy a jVector map
+ * @deprecated please use MauticMap class
  */
 Mautic.destroyMap = function(wrapper) {
     if (wrapper.hasClass('map-rendered')) {

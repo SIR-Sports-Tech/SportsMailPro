@@ -7,6 +7,7 @@
     var mauticBaseUrl                   = "{{ path('mautic_base_index') }}";
     var mauticAjaxUrl                   = "{{ path('mautic_core_ajax') }}";
     var mauticAjaxCsrf                  = '{{ securityGetCsrfToken("mautic_ajax_post") }}';
+    var mauticSessionLifetime           = "{{ ini_get('session.gc_maxlifetime') }}";
     var mauticImagesPath                = '{{ assetsGetImagesPath() }}';
     var mauticAssetPrefix               = '{{ assetsGetPrefix(true) }}';
     var mauticContent                   = '{{ mautic_content }}';
@@ -15,6 +16,5 @@
     var mauticLocale                    = '{{ app.request.getLocale() }}';
     var mauticEditorFonts               = {{ editor_fonts|json_encode|raw }};
     var mauticContactExportInBackground = {{ configGetParameter('contact_export_in_background')|number_format }};
-    var mauticFroalaEnabled = {{ configGetParameter('load_froala_assets')|number_format }};
 </script>
 {{ outputSystemScripts(true) }}

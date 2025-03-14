@@ -33,20 +33,14 @@ class LeadSubscriber implements EventSubscriberInterface
 {
     use ChannelTrait;
 
-    /**
-     * @var RouterInterface
-     */
-    private $router;
+    private RouterInterface $router;
 
     /**
      * @var string[]
      */
-    private $preventLoop = [];
+    private array $preventLoop = [];
 
-    /**
-     * @var int|null
-     */
-    private $lastContactId;
+    private ?int $lastContactId = null;
 
     /**
      * @param ModelFactory<object> $modelFactory
@@ -63,7 +57,7 @@ class LeadSubscriber implements EventSubscriberInterface
         ModelFactory $modelFactory,
         private CoreParametersHelper $coreParametersHelper,
         private CompanyLeadRepository $companyLeadRepository,
-        private $isTest = false
+        private $isTest = false,
     ) {
         $this->router              = $router;
 
@@ -417,7 +411,7 @@ class LeadSubscriber implements EventSubscriberInterface
                     [
                         'event'         => $eventTypeKey,
                         'eventId'       => $eventTypeKey.$event->getLead()->getId(),
-                        'icon'          => 'fa-user-secret',
+                        'icon'          => 'ri-spy-line',
                         'eventType'     => $eventTypeName,
                         'eventPriority' => -5, // Usually something happened to create the lead so this should display afterward
                         'timestamp'     => $dateAdded,
@@ -459,7 +453,7 @@ class LeadSubscriber implements EventSubscriberInterface
                         [
                             'event'         => $eventTypeKey,
                             'eventId'       => $eventTypeKey.$event->getLead()->getId(),
-                            'icon'          => 'fa-user',
+                            'icon'          => 'ri-user-6-fill',
                             'eventType'     => $eventTypeName,
                             'eventPriority' => -4, // A lead is created prior to being identified
                             'timestamp'     => $dateIdentified,
@@ -483,29 +477,29 @@ class LeadSubscriber implements EventSubscriberInterface
         if (!$event->isEngagementCount()) {
             // Add the logs to the event array
             foreach ($utmTags['results'] as $utmTag) {
-                $icon = 'fa-tag';
+                $icon = 'ri-hashtag';
                 if (isset($utmTag['utm_medium'])) {
                     switch (strtolower($utmTag['utm_medium'])) {
                         case 'social':
                         case 'socialmedia':
-                            $icon = 'fa-'.((isset($utmTag['utm_source'])) ? strtolower($utmTag['utm_source']) : 'share-alt');
+                            $icon = 'ri-'.((isset($utmTag['utm_source'])) ? strtolower($utmTag['utm_source']) : 'share-line');
                             break;
                         case 'email':
                         case 'newsletter':
-                            $icon = 'fa-envelope-o';
+                            $icon = 'ri-mail-open-line';
                             break;
                         case 'banner':
                         case 'ad':
-                            $icon = 'fa-bullseye';
+                            $icon = 'ri-focus-2-line';
                             break;
                         case 'cpc':
-                            $icon = 'fa-money';
+                            $icon = 'ri-cash-line';
                             break;
                         case 'location':
-                            $icon = 'fa-map-marker';
+                            $icon = 'ri-map-pin-2-line';
                             break;
                         case 'device':
-                            $icon = 'fa-'.((isset($utmTag['utm_source'])) ? strtolower($utmTag['utm_source']) : 'tablet');
+                            $icon = 'ri-'.((isset($utmTag['utm_source'])) ? strtolower($utmTag['utm_source']) : 'tablet-line');
                             break;
                     }
                 }
@@ -545,7 +539,7 @@ class LeadSubscriber implements EventSubscriberInterface
                 $row['reason'] = $this->dncReasonHelper->toText((int) $row['reason']);
 
                 $template = '@MauticLead/SubscribedEvents/Timeline/donotcontact.html.twig';
-                $icon     = 'fa-ban';
+                $icon     = 'ri-prohibited-line';
 
                 if (!empty($row['channel'])) {
                     if ($channelModel = $this->getChannelModel($row['channel'])) {
@@ -641,7 +635,7 @@ class LeadSubscriber implements EventSubscriberInterface
                             ),
                         ] : $eventLabel,
                         'timestamp'       => $import['date_added'],
-                        'icon'            => 'fa-download',
+                        'icon'            => 'ri-download-line',
                         'extra'           => $import,
                         'contentTemplate' => '@MauticLead/SubscribedEvents/Timeline/import.html.twig',
                         'contactId'       => $import['lead_id'],
@@ -691,7 +685,7 @@ class LeadSubscriber implements EventSubscriberInterface
                         'eventType'  => $eventTypeName,
                         'eventLabel' => $eventTypeName,
                         'timestamp'  => $apiEvent['date_added'],
-                        'icon'       => 'fa-cogs',
+                        'icon'       => 'ri-list-settings-line',
                         'extra'      => $apiEvent,
                         'contactId'  => $apiEvent['lead_id'],
                     ]

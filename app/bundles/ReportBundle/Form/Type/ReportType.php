@@ -27,7 +27,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class ReportType extends AbstractType
 {
     public function __construct(
-        private ReportModel $reportModel
+        private ReportModel $reportModel,
     ) {
     }
 
@@ -60,18 +60,21 @@ class ReportType extends AbstractType
                 ]
             );
 
-            $builder->add('isPublished', YesNoButtonGroupType::class);
+            $builder->add('isPublished', YesNoButtonGroupType::class, [
+                'label' => 'mautic.core.form.available',
+            ]);
 
             $data = $options['data']->getSystem();
             $builder->add(
                 'system',
                 YesNoButtonGroupType::class,
                 [
-                    'label' => 'mautic.report.report.form.issystem',
-                    'data'  => $data,
-                    'attr'  => [
+                    'label'      => 'mautic.report.report.form.issystem',
+                    'data'       => $data,
+                    'attr'       => [
                         'tooltip' => 'mautic.report.report.form.issystem.tooltip',
                     ],
+                    'no_label'   => 'mautic.lead.list.form.isglobal.no',
                 ]
             );
 
@@ -314,7 +317,7 @@ class ReportType extends AbstractType
                     'required'   => false,
                     'attr'       => [
                         'class'    => 'form-control',
-                        'preaddon' => 'fa fa-envelope',
+                        'preaddon' => 'ri-mail-line',
                         'tooltip'  => 'mautic.report.schedule.toAddress.tooltip',
                     ],
                 ]

@@ -75,7 +75,7 @@ class CustomFieldNotificationTest extends \PHPUnit\Framework\TestCase
                 'info',
                 false,
                 'text',
-                'fa-columns',
+                'ri-layout-column-line',
                 null,
                 $user
             );
@@ -83,5 +83,41 @@ class CustomFieldNotificationTest extends \PHPUnit\Framework\TestCase
         $customFieldNotification = new CustomFieldNotification($notificationModel, $userModel, $translatorInterface);
 
         $customFieldNotification->customFieldWasCreated($leadField, $userId);
+    }
+
+    public function testCustomFieldWasDeleted(): void
+    {
+        $notificationModel   = $this->createMock(NotificationModel::class);
+        $userModel           = $this->createMock(UserModel::class);
+        $translatorInterface = $this->createMock(TranslatorInterface::class);
+
+        $userId    = 1;
+        $leadField = new LeadField();
+        $user      = new User();
+
+        $userModel->expects($this->once())
+            ->method('getEntity')
+            ->with($userId)
+            ->willReturn($user);
+
+        $translatorInterface->expects($this->exactly(2))
+            ->method('trans')
+            ->willReturn('textDelete');
+
+        $notificationModel->expects($this->once())
+            ->method('addNotification')
+            ->with(
+                'textDelete',
+                'info',
+                false,
+                'textDelete',
+                'ri-layout-column-line',
+                null,
+                $user
+            );
+
+        $customFieldNotification = new CustomFieldNotification($notificationModel, $userModel, $translatorInterface);
+
+        $customFieldNotification->customFieldWasDeleted($leadField, $userId);
     }
 }

@@ -45,7 +45,7 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
         $clientResponse = $this->client->getResponse();
         $fieldResponse  = json_decode($clientResponse->getContent(), true);
 
-        Assert::assertSame(Response::HTTP_CREATED, $clientResponse->getStatusCode(), $clientResponse->getContent());
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED, $clientResponse->getContent());
         Assert::assertTrue($fieldResponse['field']['isPublished']);
         Assert::assertGreaterThan(0, $fieldResponse['field']['id']);
         Assert::assertSame($payload['label'], $fieldResponse['field']['label']);
@@ -58,7 +58,7 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
         // Cleanup
         $this->client->request(Request::METHOD_DELETE, '/api/fields/contact/'.$fieldResponse['field']['id'].'/delete', $payload);
         $clientResponse = $this->client->getResponse();
-        Assert::assertSame(Response::HTTP_OK, $clientResponse->getStatusCode(), $clientResponse->getContent());
+        self::assertResponseIsSuccessful($clientResponse->getContent());
     }
 
     /**
@@ -87,7 +87,7 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertPatchResponse($payload, $id, $alias);
 
         // Test deleting
-        $this->assertDeleteResponse($payload, $id, $alias);
+        $this->assertDeleteResponse($payload, $id, $alias, true);
     }
 
     /**
@@ -110,7 +110,64 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertPatchResponse($payload, $id, $alias);
 
         // Test deleting
-        $this->assertDeleteResponse($payload, $id, $alias);
+        $this->assertDeleteResponse($payload, $id, $alias, false);
+    }
+
+    /**
+     * @param array<string, array<string, string>> $properties
+     *
+     * @dataProvider dataForCreatingNewBooleanFieldApiEndpoint
+     */
+    public function testCreatingNewBooleanFieldApiEndpoint(array $properties, string $expectedMessage): void
+    {
+        $payload = [
+            'label'               => 'Request a meeting',
+            'alias'               => 'meeting',
+            'type'                => 'boolean',
+            'isPubliclyUpdatable' => true,
+            'isUniqueIdentifier'  => false,
+        ];
+
+        $payload += $properties;
+
+        $typeSafePayload = $this->generateTypeSafePayload($payload);
+        $this->client->request(Request::METHOD_POST, '/api/fields/contact/new', $typeSafePayload);
+        $clientResponse = $this->client->getResponse();
+        $errorResponse  = json_decode($clientResponse->getContent(), true);
+
+        Assert::assertArrayHasKey('errors', $errorResponse);
+        Assert::assertSame($errorResponse['errors'][0]['code'], $clientResponse->getStatusCode());
+        Assert::assertSame($expectedMessage, $errorResponse['errors'][0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array<int, string|array<string, array<string, string>>>>
+     */
+    public function dataForCreatingNewBooleanFieldApiEndpoint(): iterable
+    {
+        yield 'No properties' => [
+            [
+            ],
+            'A \'positive\' label is required.',
+        ];
+
+        yield 'Only Yes' => [
+            [
+                'properties'=> [
+                    'yes' => 'Yes',
+                ],
+            ],
+            'A \'negative\' label is required.',
+        ];
+
+        yield 'Only No' => [
+            [
+                'properties'=> [
+                    'no' => 'No',
+                ],
+            ],
+            'A \'positive\' label is required.',
+        ];
     }
 
     private function assertCreateResponse(array $payload, int $expectedStatusCode): int
@@ -177,7 +234,7 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
         }
     }
 
-    private function assertDeleteResponse(array $payload, int $id, string $alias): void
+    private function assertDeleteResponse(array $payload, int $id, string $alias, bool $isBackground): void
     {
         // Test the field is deleted
         $this->client->request('DELETE', sprintf('/api/fields/contact/%s/delete', $id));
@@ -191,7 +248,7 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
             $this->assertArrayHasKey($key, $response['field']);
 
             match ($key) {
-                'id'     => $this->assertNull($response['field'][$key]),
+                'id'     => $isBackground ? $this->assertEquals($value, $response['field'][$key]) : $this->assertNull($response['field'][$key]),
                 'alias'  => $this->assertEquals($alias, $response['field'][$key]),
                 'object' => $this->assertEquals('lead', $response['field'][$key]),
                 'type'   => $this->assertEquals('text', $response['field'][$key]),
@@ -215,6 +272,8 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
             'isUniqueIdentifier'  => true,
             'isVisible'           => false,
             'isListable'          => false,
+            'isIndex'             => true, // Must be true, because if isUniqueIdentifier field is true the contact field *must* be indexed.
+            'charLengthLimit'     => 255,
             'properties'          => [],
         ];
     }
@@ -234,6 +293,8 @@ final class FieldApiControllerFunctionalTest extends MauticMysqlTestCase
             'isUniqueIdentifier'  => false,
             'isVisible'           => true,
             'isListable'          => true,
+            'isIndex'             => false, // Can be false, if isUniqueIdentifier the field is *not* indexed.
+            'charLengthLimit'     => 250,
             'properties'          => [],
         ];
     }

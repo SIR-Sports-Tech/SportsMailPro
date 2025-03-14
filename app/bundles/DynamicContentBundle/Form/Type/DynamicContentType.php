@@ -38,7 +38,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class DynamicContentType extends AbstractType
 {
-    private $fieldChoices;
+    /**
+     * @var mixed[]
+     */
+    private array $fieldChoices;
 
     /**
      * @var mixed[]
@@ -81,7 +84,7 @@ class DynamicContentType extends AbstractType
         private EntityManager $em,
         ListModel $listModel,
         private TranslatorInterface $translator,
-        private LeadModel $leadModel
+        private LeadModel $leadModel,
     ) {
         $this->fieldChoices    = $listModel->getChoiceFields();
         $this->timezoneChoices = FormFieldHelper::getTimezonesChoices();
@@ -143,7 +146,9 @@ class DynamicContentType extends AbstractType
             ]
         );
 
-        $builder->add('isPublished', YesNoButtonGroupType::class);
+        $builder->add('isPublished', YesNoButtonGroupType::class, [
+            'label' => 'mautic.core.form.available',
+        ]);
 
         $builder->add(
             'isCampaignBased',
@@ -324,14 +329,24 @@ class DynamicContentType extends AbstractType
     private function filterFieldChoices(): void
     {
         unset($this->fieldChoices['company']);
-        $customFields               = $this->leadModel->getRepository()->getCustomFieldList('lead');
-        $this->fieldChoices['lead'] = array_filter($this->fieldChoices['lead'], fn ($key): bool => in_array($key, array_merge(array_keys($customFields[0]), ['date_added', 'date_modified', 'device_brand', 'device_model', 'device_os', 'device_type', 'tags']), true), ARRAY_FILTER_USE_KEY);
+
+        $customFields = $this->leadModel->getRepository()->getCustomFieldList('lead');
+
+        $this->fieldChoices['lead'] = array_filter(
+            $this->fieldChoices['lead'],
+            fn ($key): bool => in_array(
+                $key,
+                array_merge(
+                    array_keys($customFields[0]),
+                    ['date_added', 'date_modified', 'device_brand', 'device_model', 'device_os', 'device_type', 'tags', 'leadlist']
+                ),
+                true
+            ),
+            ARRAY_FILTER_USE_KEY
+        );
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'dwc';
     }

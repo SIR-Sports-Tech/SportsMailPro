@@ -2,6 +2,7 @@
 
 namespace Mautic\UserBundle\Form\Type;
 
+use Doctrine\Common\Collections\Order;
 use Doctrine\ORM\EntityRepository;
 use Mautic\CoreBundle\Form\EventListener\CleanFormSubscriber;
 use Mautic\CoreBundle\Form\EventListener\FormExitSubscriber;
@@ -32,7 +33,7 @@ class UserType extends AbstractType
     public function __construct(
         private TranslatorInterface $translator,
         private UserModel $model,
-        private LanguageHelper $languageHelper
+        private LanguageHelper $languageHelper,
     ) {
     }
 
@@ -49,7 +50,7 @@ class UserType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'        => 'form-control',
-                    'preaddon'     => 'fa fa-user',
+                    'preaddon'     => 'ri-user-6-fill',
                     'autocomplete' => 'off',
                 ],
             ]
@@ -98,7 +99,7 @@ class UserType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'    => 'form-control',
-                    'preaddon' => 'fa fa-envelope',
+                    'preaddon' => 'ri-mail-line',
                 ],
             ]
         );
@@ -119,7 +120,7 @@ class UserType extends AbstractType
                         'class'        => 'form-control',
                         'placeholder'  => $placeholder,
                         'tooltip'      => 'mautic.user.user.form.help.passwordrequirements',
-                        'preaddon'     => 'fa fa-lock',
+                        'preaddon'     => 'ri-lock-fill',
                         'autocomplete' => 'off',
                     ],
                     'required'       => $required,
@@ -133,7 +134,7 @@ class UserType extends AbstractType
                         'class'        => 'form-control',
                         'placeholder'  => $placeholder,
                         'tooltip'      => 'mautic.user.user.form.help.passwordrequirements',
-                        'preaddon'     => 'fa fa-lock',
+                        'preaddon'     => 'ri-lock-fill',
                         'autocomplete' => 'off',
                     ],
                     'required'       => $required,
@@ -175,6 +176,14 @@ class UserType extends AbstractType
             ]
         );
 
+        $builder->add(
+            'preferences',
+            UserPreferencesType::class,
+            [
+                'label'      => false,
+            ]
+        );
+
         $defaultSignature = '';
         if (isset($options['data']) && null === $options['data']->getSignature()) {
             $defaultSignature = $this->translator->trans('mautic.email.default.signature', ['%from_name%' => '|FROM_NAME|']);
@@ -212,14 +221,12 @@ class UserType extends AbstractType
                         'choice_label'  => 'name',
                         'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('r')
                             ->where('r.isPublished = true')
-                            ->orderBy('r.name', \Doctrine\Common\Collections\Criteria::ASC),
+                            ->orderBy('r.name', Order::Ascending->value),
                     ]
                 )
             );
 
-            $builder->add('isPublished', YesNoButtonGroupType::class, [
-                'label' => 'mautic.user.active',
-            ]);
+            $builder->add('isPublished', YesNoButtonGroupType::class);
 
             $builder->add('buttons', FormButtonsType::class);
         } else {

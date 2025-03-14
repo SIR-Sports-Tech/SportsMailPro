@@ -7,6 +7,14 @@ return [
     'author'      => 'Leuchtfeuer',
     'routes'      => [
         'main' => [
+            'mautic_tagmanager_batch_index_action' => [
+                'path'       => '/tags/batch/view',
+                'controller' => 'MauticPlugin\MauticTagManagerBundle\Controller\BatchTagController::indexAction',
+            ],
+            'mautic_tagmanager_batch_set_action' => [
+                'path'       => '/tags/batch/set',
+                'controller' => 'MauticPlugin\MauticTagManagerBundle\Controller\BatchTagController::execAction',
+            ],
             'mautic_tagmanager_index' => [
                 'path'       => '/tags/{page}',
                 'controller' => 'MauticPlugin\MauticTagManagerBundle\Controller\TagController::indexAction',
@@ -25,11 +33,10 @@ return [
                     'event_dispatcher',
                     'mautic.helper.cache_storage',
                     'doctrine.orm.entity_manager',
-                    'session',
                     'request_stack',
                     'router',
                     'translator',
-                    'logger',
+                    'monolog.logger.mautic',
                     'mautic.helper.encryption',
                     'mautic.lead.model.lead',
                     'mautic.lead.model.company',
@@ -38,6 +45,7 @@ return [
                     'mautic.lead.model.field',
                     'mautic.plugin.model.integration_entity',
                     'mautic.lead.model.dnc',
+                    'mautic.lead.field.fields_with_unique_identifier',
                 ],
             ],
         ],

@@ -7,18 +7,13 @@
 #}
 {% if items|length > 0 %}
     <div class="table-responsive">
-        <table class="table table-hover table-striped table-bordered" id="leadListTable">
+        <table class="table table-hover" id="leadListTable">
             <thead>
             <tr>
                 {{ include('@MauticCore/Helper/tableheader.html.twig', {
                         'checkall': 'true',
                         'target': '#leadListTable',
-                        'langVar': 'lead.list',
-                        'routeBase': 'segment',
-                        'templateButtons': {
-                            'delete': permissions['lead:lists:deleteother'],
-                        },
-                }) }}
+                    }) }}
                 {{ include('@MauticCore/Helper/tableheader.html.twig', {
                         'sessionVar': 'lead.list',
                         'orderBy': 'l.name',

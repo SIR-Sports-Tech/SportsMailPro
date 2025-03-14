@@ -44,10 +44,24 @@ trait OperatorListTrait
             ],
         ],
         'default' => [
-            'exclude' => [
-                OperatorOptions::IN,
-                OperatorOptions::NOT_IN,
-                OperatorOptions::DATE,
+            'include' => [
+                OperatorOptions::EQUAL_TO,
+                OperatorOptions::NOT_EQUAL_TO,
+                OperatorOptions::GREATER_THAN,
+                OperatorOptions::GREATER_THAN_OR_EQUAL,
+                OperatorOptions::LESS_THAN,
+                OperatorOptions::LESS_THAN_OR_EQUAL,
+                OperatorOptions::EMPTY,
+                OperatorOptions::NOT_EMPTY,
+                OperatorOptions::LIKE,
+                OperatorOptions::NOT_LIKE,
+                OperatorOptions::BETWEEN,
+                OperatorOptions::NOT_BETWEEN,
+                OperatorOptions::REGEXP,
+                OperatorOptions::NOT_REGEXP,
+                OperatorOptions::STARTS_WITH,
+                OperatorOptions::ENDS_WITH,
+                OperatorOptions::CONTAINS,
             ],
         ],
         'multiselect' => [
@@ -59,9 +73,25 @@ trait OperatorListTrait
             ],
         ],
         'date' => [
-            'exclude' => [
-                OperatorOptions::IN,
-                OperatorOptions::NOT_IN,
+            'include' => [
+                OperatorOptions::EQUAL_TO,
+                OperatorOptions::NOT_EQUAL_TO,
+                OperatorOptions::GREATER_THAN,
+                OperatorOptions::GREATER_THAN_OR_EQUAL,
+                OperatorOptions::LESS_THAN,
+                OperatorOptions::LESS_THAN_OR_EQUAL,
+                OperatorOptions::EMPTY,
+                OperatorOptions::NOT_EMPTY,
+                OperatorOptions::LIKE,
+                OperatorOptions::NOT_LIKE,
+                OperatorOptions::BETWEEN,
+                OperatorOptions::NOT_BETWEEN,
+                OperatorOptions::REGEXP,
+                OperatorOptions::NOT_REGEXP,
+                OperatorOptions::DATE,
+                OperatorOptions::STARTS_WITH,
+                OperatorOptions::ENDS_WITH,
+                OperatorOptions::CONTAINS,
             ],
         ],
         'lookup_id' => [
@@ -168,7 +198,7 @@ trait OperatorListTrait
             $choices = array_diff_key($choices, array_flip($definition['exclude']));
         }
 
-        if (property_exists($this, 'translator')) {
+        if (property_exists($this, 'translator')) { // @phpstan-ignore-line based on https://github.com/phpstan/phpstan/issues/9095 (Call to function property_exists() with ...  'translator' will always evaluate to false.)
             foreach ($choices as $value => $label) {
                 $choices[$value] = $this->translator->trans($label);
             }

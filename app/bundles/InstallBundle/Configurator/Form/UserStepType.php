@@ -9,7 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -18,13 +18,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 class UserStepType extends AbstractType
 {
     public function __construct(
-        private SessionInterface $session
+        private RequestStack $requestStack,
     ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $storedData = $this->session->get('mautic.installer.user', new \stdClass());
+        $storedData = $this->requestStack->getSession()->get('mautic.installer.user', new \stdClass());
 
         $builder->add(
             'firstname',
@@ -72,7 +72,7 @@ class UserStepType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'    => 'form-control',
-                    'preaddon' => 'fa fa-envelope',
+                    'preaddon' => 'ri-mail-line',
                 ],
                 'required'    => true,
                 'data'        => (!empty($storedData->email)) ? $storedData->email : '',
@@ -121,7 +121,7 @@ class UserStepType extends AbstractType
                 'attr'       => [
                     'class'    => 'form-control',
                     'tooltip'  => 'mautic.user.user.form.help.passwordrequirements',
-                    'preaddon' => 'fa fa-lock',
+                    'preaddon' => 'ri-lock-fill',
                 ],
                 'required'    => true,
                 'constraints' => [
@@ -154,7 +154,7 @@ class UserStepType extends AbstractType
                         'type'  => 'submit',
                         'attr'  => [
                             'class'   => 'btn btn-success pull-right btn-next',
-                            'icon'    => 'fa fa-arrow-circle-right',
+                            'icon'    => 'ri-arrow-right-circle-line',
                             'onclick' => 'MauticInstaller.showWaitMessage(event);',
                         ],
                     ],
@@ -170,7 +170,7 @@ class UserStepType extends AbstractType
         }
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'install_user_step';
     }

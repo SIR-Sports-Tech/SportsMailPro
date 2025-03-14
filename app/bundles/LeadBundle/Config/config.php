@@ -312,12 +312,15 @@ return [
                     'iconClass' => 'ri-input-field',
                     'route'     => 'mautic_contactfield_index',
                     'access'    => 'lead:fields:full',
+                    'priority'  => 19,
                 ],
             ],
         ],
     ],
     'categories' => [
-        'segment' => null,
+        'segment' => [
+            'class' => Mautic\LeadBundle\Entity\LeadList::class,
+        ],
     ],
     'services' => [
         'events' => [
@@ -341,7 +344,7 @@ return [
             'mautic.lead.export_scheduled_logger_subscriber' => [
                 'class'     => Mautic\LeadBundle\EventListener\ContactExportSchedulerLoggerSubscriber::class,
                 'arguments' => [
-                    'logger',
+                    'monolog.logger.mautic',
                 ],
             ],
             'mautic.lead.export_scheduled_notification_subscriber' => [
@@ -447,34 +450,15 @@ return [
                 'class'     => Mautic\LeadBundle\Deduplicate\ContactDeduper::class,
                 'arguments' => [
                     'mautic.lead.model.field',
+                    'mautic.lead.field.fields_with_unique_identifier',
                     'mautic.lead.merger',
                     'mautic.lead.repository.lead',
-                ],
-            ],
-            'mautic.company.deduper' => [
-                'class'     => Mautic\LeadBundle\Deduplicate\CompanyDeduper::class,
-                'arguments' => [
-                    'mautic.lead.model.field',
-                    'mautic.lead.repository.company',
                 ],
             ],
             'mautic.lead.helper.primary_company' => [
                 'class'     => Mautic\LeadBundle\Helper\PrimaryCompanyHelper::class,
                 'arguments' => [
                     'mautic.lead.repository.company_lead',
-                ],
-            ],
-            'mautic.lead.helper.contact_request_helper' => [
-                'class'     => Mautic\LeadBundle\Helper\ContactRequestHelper::class,
-                'arguments' => [
-                    'mautic.lead.model.lead',
-                    'mautic.tracker.contact',
-                    'mautic.helper.core_parameters',
-                    'mautic.helper.ip_lookup',
-                    'request_stack',
-                    'monolog.logger.mautic',
-                    'event_dispatcher',
-                    'mautic.lead.merger',
                 ],
             ],
             'mautic.lead.validator.length' => [
@@ -522,21 +506,6 @@ return [
                     'event_dispatcher',
                 ],
             ],
-            'mautic.tracker.contact' => [
-                'class'     => Mautic\LeadBundle\Tracker\ContactTracker::class,
-                'arguments' => [
-                    'mautic.lead.repository.lead',
-                    'mautic.lead.service.contact_tracking_service',
-                    'mautic.tracker.device',
-                    'mautic.security',
-                    'monolog.logger.mautic',
-                    'mautic.helper.ip_lookup',
-                    'request_stack',
-                    'mautic.helper.core_parameters',
-                    'event_dispatcher',
-                    'mautic.lead.model.field',
-                ],
-            ],
             'mautic.tracker.device' => [
                 'class'     => Mautic\LeadBundle\Tracker\DeviceTracker::class,
                 'arguments' => [
@@ -577,8 +546,6 @@ return [
                 'arguments' => [
                     'mautic.lead.model.list',
                     'router',
-                    'mautic.helper.core_parameters',
-                    'mautic.lead.repository.company_lead',
                 ],
             ],
             'mautic.lead.repository.lead_segment_query_builder' => [
@@ -797,16 +764,6 @@ return [
                     'mautic.helper.core_parameters',
                 ],
             ],
-            'mautic.lead.field.settings.background_service' => [
-                'class'     => Mautic\LeadBundle\Field\BackgroundService::class,
-                'arguments' => [
-                    'mautic.lead.model.field',
-                    'mautic.lead.field.custom_field_column',
-                    'mautic.lead.field.lead_field_saver',
-                    'mautic.lead.field.dispatcher.field_column_background_dispatcher',
-                    'mautic.lead.field.notification.custom_field',
-                ],
-            ],
             'mautic.lead.field.notification.custom_field' => [
                 'class'     => Mautic\LeadBundle\Field\Notification\CustomFieldNotification::class,
                 'arguments' => [
@@ -971,5 +928,6 @@ return [
         'contact_export_dir'                                                                    => '%mautic.application_dir%/media/files/temp',
         'contact_export_batch_size'                                                             => 20000,
         'contact_allow_multiple_companies'                                                      => true,
+        'import_leads_dir'                                                                      => '%kernel.project_dir%/var/import',
     ],
 ];

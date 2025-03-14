@@ -19,7 +19,7 @@ class PublicController extends FormController
      *
      * @param string    $message   Message of the notification
      * @param string    $header    Header for message
-     * @param string    $iconClass Font Awesome CSS class for the icon (e.g. fa-eye)
+     * @param string    $iconClass CSS class for the icon (e.g. ri-eye-line)
      * @param User|null $user      User object; defaults to current user
      */
     public function addNewNotification($message, $header, $iconClass, User $user): void
@@ -45,7 +45,7 @@ class PublicController extends FormController
         }
 
         /** @var array $result */
-        $result           = $request->request->get('body') ?? [];
+        $result           = $request->request->all()['body'] ?? [];
         $oid              = $request->request->get('id');
         $validatedRequest = $lookupHelper->validateRequest($oid, $request->request->get('type'));
 
@@ -158,7 +158,7 @@ class PublicController extends FormController
                         $this->addNewNotification(
                             sprintf($this->translator->trans('mautic.plugin.clearbit.contact_retrieved'), $lead->getEmail()),
                             'Clearbit Plugin',
-                            'fa-search',
+                            'ri-search-line',
                             $user
                         );
                     }
@@ -248,7 +248,7 @@ class PublicController extends FormController
                             $this->addNewNotification(
                                 sprintf($this->translator->trans('mautic.plugin.clearbit.company_retrieved'), $company->getName()),
                                 'Clearbit Plugin',
-                                'fa-search',
+                                'ri-search-line',
                                 $user
                             );
                         }
@@ -268,7 +268,7 @@ class PublicController extends FormController
                                 $ex->getMessage()
                             ),
                             'Clearbit Plugin',
-                            'fa-exclamation',
+                            'ri-error-warning-line',
                             $user
                         );
                     }

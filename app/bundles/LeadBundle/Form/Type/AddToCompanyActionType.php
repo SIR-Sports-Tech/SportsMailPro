@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 class AddToCompanyActionType extends AbstractType
 {
     public function __construct(
-        protected RouterInterface $router
+        protected RouterInterface $router,
     ) {
     }
 
@@ -51,17 +51,14 @@ class AddToCompanyActionType extends AbstractType
                 'attr' => [
                     'class'   => 'btn btn-primary btn-nospin',
                     'onclick' => 'Mautic.loadNewWindow({"windowUrl": "'.$windowUrl.'"})',
-                    'icon'    => 'fa fa-plus',
+                    'icon'    => 'ri-add-line',
                 ],
                 'label' => 'mautic.company.new.company',
             ]
         );
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'addtocompany_action';
     }

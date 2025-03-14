@@ -32,7 +32,7 @@ class UploadType extends AbstractType
             [
                 'attr' => [
                     'class'   => 'btn btn-primary',
-                    'icon'    => 'fa fa-upload',
+                    'icon'    => 'ri-upload-line',
                     'onclick' => "mQuery(this).prop('disabled', true); mQuery('form[name=\'dashboard_upload\']').submit();",
                 ],
                 'label' => 'mautic.lead.import.upload',
@@ -42,10 +42,7 @@ class UploadType extends AbstractType
         }
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'dashboard_upload';
     }
