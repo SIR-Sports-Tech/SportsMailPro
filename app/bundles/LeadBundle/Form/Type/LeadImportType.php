@@ -45,7 +45,6 @@ class LeadImportType extends AbstractType
                         ['message' => 'mautic.import.file.required']
                     ),
                     new FileNameLength([
-                        'message' => 'mautic.lead.import.filename.length',
                         'maxLength' => 191,
                     ]),
                 ],
