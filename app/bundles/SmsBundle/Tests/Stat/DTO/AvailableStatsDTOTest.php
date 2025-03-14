@@ -50,7 +50,7 @@ class AvailableStatsDTOTest extends TestCase
 
     protected function getTransportWithSupportInterfaces(): TransportInterface|DeliverySupportInterface|ReadSupportInterface|FailedSupportInterface
     {
-        $transport = new class() implements TransportInterface, DeliverySupportInterface, ReadSupportInterface, FailedSupportInterface {
+        $transport = new class implements TransportInterface, DeliverySupportInterface, ReadSupportInterface, FailedSupportInterface {
             public function sendSms(Lead $lead, $content)
             {
                 return true;
