@@ -39,7 +39,7 @@ final class ImportControllerTest extends MauticMysqlTestCase
         $uploadForm = $crawler->selectButton('Upload')->form();
         $file       = new UploadedFile(__DIR__.'/../Fixtures/contacts.csv', 'contacs.csv', 'itext/csv');
 
-        $uploadForm['lead_import[file]']->setValue((string) $file);
+        $uploadForm['lead_import[file]']->setValue((string) $file);/drop
 
         $crawler     = $this->client->submit($uploadForm);
         $mappingForm = $crawler->selectButton('Import')->form();
