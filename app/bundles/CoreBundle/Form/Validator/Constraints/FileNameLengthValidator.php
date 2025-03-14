@@ -25,7 +25,7 @@ class FileNameLengthValidator extends ConstraintValidator
         }
 
         $originalFilename = $value->getClientOriginalName();
-        
+
         if (strlen($originalFilename) > $constraint->maxLength) {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('%length%', (string) $constraint->maxLength)
