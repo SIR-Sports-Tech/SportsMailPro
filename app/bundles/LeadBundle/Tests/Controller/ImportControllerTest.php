@@ -48,6 +48,43 @@ final class ImportControllerTest extends MauticMysqlTestCase
         Assert::assertStringContainsString('Some required fields are missing. You must map the field "Phone."', $crawler->html());
     }
 
+    public function testImportWithTooLongFilename(): void
+    {
+        $longFilename = str_repeat('a', 192) . '.csv';
+        $crawler = $this->client->request(Request::METHOD_GET, '/s/contacts/import/new');
+        $uploadForm = $crawler->selectButton('Upload')->form();
+        $file = new UploadedFile(__DIR__.'/../Fixtures/contacts.csv', $longFilename, 'text/csv');
+
+        $uploadForm['lead_import[file]']->setValue((string) $file);
+        $crawler = $this->client->submit($uploadForm);
+
+        Assert::assertStringContainsString('This value is too long', $crawler->html());
+    }
+
+    public function testFilenameIsTruncatedOnImport(): void
+    {
+        $longFilename = str_repeat('a', 190) . '.csv';
+        $crawler = $this->client->request(Request::METHOD_GET, '/s/contacts/import/new');
+        $uploadForm = $crawler->selectButton('Upload')->form();
+        $file = new UploadedFile(__DIR__.'/../Fixtures/contacts.csv', $longFilename, 'text/csv');
+
+        $uploadForm['lead_import[file]']->setValue((string) $file);
+        $crawler = $this->client->submit($uploadForm);
+        
+        // Should go to next step since the filename truncation happens in the controller
+        $mappingForm = $crawler->selectButton('Import')->form();
+        $this->client->submit($mappingForm);
+
+        // Check that the truncated filename was stored
+        /** @var ImportRepository $importRepository */
+        $importRepository = $this->em->getRepository(Import::class);
+        /** @var Import $importEntity */
+        $importEntity = $importRepository->findOneBy([], ['id' => 'DESC']);
+        
+        Assert::assertNotNull($importEntity);
+        Assert::assertLessThanOrEqual(191, strlen($importEntity->getOriginalFile()));
+    }
+
     /**
      *  @dataProvider validateDataProvider
      */
