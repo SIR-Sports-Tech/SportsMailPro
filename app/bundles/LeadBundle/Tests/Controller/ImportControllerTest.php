@@ -50,10 +50,10 @@ final class ImportControllerTest extends MauticMysqlTestCase
 
     public function testImportWithTooLongFilename(): void
     {
-        $longFilename = str_repeat('a', 200) . '.csv';
-        $crawler = $this->client->request(Request::METHOD_GET, '/s/contacts/import/new');
-        $uploadForm = $crawler->selectButton('Upload')->form();
-        $file = new UploadedFile(__DIR__.'/../Fixtures/contacts.csv', $longFilename, 'text/csv');
+        $longFilename = str_repeat('a', 200).'.csv';
+        $crawler      = $this->client->request(Request::METHOD_GET, '/s/contacts/import/new');
+        $uploadForm   = $crawler->selectButton('Upload')->form();
+        $file         = new UploadedFile(__DIR__.'/../Fixtures/contacts.csv', $longFilename, 'text/csv');
 
         $uploadForm['lead_import[file]']->setValue((string) $file);
         $crawler = $this->client->submit($uploadForm);
