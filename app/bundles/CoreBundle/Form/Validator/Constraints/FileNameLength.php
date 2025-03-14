@@ -9,8 +9,8 @@ use Symfony\Component\Validator\Constraint;
  */
 class FileNameLength extends Constraint
 {
-    public $message   = 'mautic.core.filename.length';
-    public $maxLength = 191;
+    public string $message   = 'mautic.core.filename.length';
+    public int $maxLength = 191;
 
     public function validatedBy()
     {

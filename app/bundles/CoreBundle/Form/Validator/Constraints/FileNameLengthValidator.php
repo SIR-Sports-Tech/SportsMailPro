@@ -14,7 +14,7 @@ class FileNameLengthValidator extends ConstraintValidator
     /**
      * @param UploadedFile|mixed $value
      */
-    public function validate($value, Constraint $constraint): void
+    public function validate($value, FileNameLength $constraint): void
     {
         if (null === $value) {
             return;
