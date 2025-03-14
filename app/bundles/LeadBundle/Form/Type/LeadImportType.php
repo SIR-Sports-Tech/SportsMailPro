@@ -43,6 +43,7 @@ class LeadImportType extends AbstractType
                     new NotBlank(
                         ['message' => 'mautic.import.file.required']
                     ),
+                    // move this validation to app/bundles/CoreBundle/Form/Validator/Constraints to be reusable AI!
                     new \Symfony\Component\Validator\Constraints\Callback(function ($object, \Symfony\Component\Validator\Context\ExecutionContextInterface $context) {
                         if ($object && $object->getClientOriginalName() && strlen($object->getClientOriginalName()) > 191) {
                             $context->buildViolation('mautic.lead.import.filename.length')
