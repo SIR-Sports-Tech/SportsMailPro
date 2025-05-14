@@ -12,6 +12,7 @@ c = future major release
 
 | Q                                      | A
 | -------------------------------------- | ---
+| Human-readable description             | <!-- Please provide a description of what this PR is implementing which will be used for release note generation. Ensure a marketer can understand what's written, try to make it as clear and easy to understand as possible. -->
 | Bug fix? (use the a.b branch)          | ✔️❌ <!-- Use emojis to indicate positive (green) or negative (red) for each item in the table. -->
 | New feature/enhancement? (use the a.x branch)      | ✔️❌
 | Deprecations?                          | ✔️❌
