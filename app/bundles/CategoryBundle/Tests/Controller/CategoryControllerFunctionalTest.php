@@ -118,6 +118,39 @@ class CategoryControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertStringContainsString('is currently checked out by', $this->client->getResponse()->getContent());
     }
 
+    public function testEditCategorySaveAndClose(): void
+    {
+        /** @var CategoryModel $categoryModel */
+        $categoryModel = static::getContainer()->get('mautic.category.model.category');
+
+        // Create a test category
+        $category = new Category();
+        $category->setTitle('Test Category for Edit');
+        $category->setAlias('test-category-edit');
+        $category->setBundle('global');
+        $category->setIsPublished(true);
+        $categoryModel->saveEntity($category);
+
+        // Test the edit form submission (save and close)
+        $crawler = $this->client->request(Request::METHOD_GET, 's/categories/global/edit/'.$category->getId());
+        $this->assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        // Find the form and submit it
+        $form = $crawler->selectButton('category_form[buttons][save]')->form();
+        $form['category_form[title]']->setValue('Updated Test Category');
+        $form['category_form[description]']->setValue('Updated description');
+
+        $this->client->submit($form);
+
+        // Verify the response is successful (no OutOfBoundsException)
+        $this->assertTrue($this->client->getResponse()->isSuccessful());
+
+        // Verify the category was updated
+        $updatedCategory = $categoryModel->getEntity($category->getId());
+        $this->assertSame('Updated Test Category', $updatedCategory->getTitle());
+        $this->assertSame('Updated description', $updatedCategory->getDescription());
+    }
+
     public function testDeleteUsedInStage(): void
     {
         $category = new Category();
