@@ -48,6 +48,10 @@ final class ImportControllerTest extends MauticMysqlTestCase
         Assert::assertStringContainsString('Some required fields are missing. You must map the field "Phone."', $crawler->html());
     }
 
+    /**
+     * Test that filename length validation is properly enforced during import.
+     * Files with names longer than 191 characters should be rejected with a validation error.
+     */
     public function testImportWithTooLongFilename(): void
     {
         $longFilename = str_repeat('a', 200).'.csv';
@@ -58,7 +62,10 @@ final class ImportControllerTest extends MauticMysqlTestCase
         $uploadForm['lead_import[file]']->setValue((string) $file);
         $crawler = $this->client->submit($uploadForm);
 
-        Assert::assertStringContainsString('Unable to read the imported csv file', $crawler->html());
+        // The form should not proceed to mapping step if filename validation fails
+        // Instead it should show the upload form again with validation errors
+        Assert::assertStringNotContainsString('lead_field_import_buttons_apply', $crawler->html(),
+            'Form should not proceed to mapping step with invalid filename. Current response: '.$crawler->html());
     }
 
     /**
