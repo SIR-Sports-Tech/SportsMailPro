@@ -14,8 +14,12 @@ class FileNameLengthValidator extends ConstraintValidator
     /**
      * @param UploadedFile|mixed $value
      */
-    public function validate($value, FileNameLength $constraint): void
+    public function validate($value, Constraint $constraint): void
     {
+        if (!$constraint instanceof FileNameLength) {
+            throw new \InvalidArgumentException('Expected instance of FileNameLength constraint.');
+        }
+
         if (null === $value) {
             return;
         }
