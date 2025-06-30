@@ -148,4 +148,3 @@ tests/**/*.sql
 !/themes/blank-big.png
 
 /translations
-var/import/
