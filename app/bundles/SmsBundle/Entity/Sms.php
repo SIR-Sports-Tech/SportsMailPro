@@ -13,6 +13,7 @@ use Mautic\CoreBundle\Entity\UuidTrait;
 use Mautic\CoreBundle\Validator\EntityEvent;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Form\Validator\Constraints\LeadListAccess;
+use Mautic\ProjectBundle\Entity\ProjectTrait;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -41,6 +42,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 class Sms extends FormEntity implements UuidInterface
 {
     use UuidTrait;
+    use ProjectTrait;
 
     /**
      * @var int
@@ -144,6 +146,7 @@ class Sms extends FormEntity implements UuidInterface
     {
         $this->lists = new ArrayCollection();
         $this->stats = new ArrayCollection();
+        $this->initializeProjects();
     }
 
     /**
@@ -213,6 +216,7 @@ class Sms extends FormEntity implements UuidInterface
             ->build();
 
         static::addUuidField($builder);
+        self::addProjectsField($builder, 'sms_projects_xref', 'sms_id');
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
@@ -226,8 +230,8 @@ class Sms extends FormEntity implements UuidInterface
             )
         );
 
-        $metadata->addConstraint(new Callback([
-            'callback' => function (Sms $sms, ExecutionContextInterface $context): void {
+        $metadata->addConstraint(new Callback(
+            function (Sms $sms, ExecutionContextInterface $context): void {
                 $type = $sms->getSmsType();
                 if ('list' == $type) {
                     $validator  = $context->getValidator();
@@ -250,7 +254,7 @@ class Sms extends FormEntity implements UuidInterface
                     }
                 }
             },
-        ]));
+        ));
 
         $metadata->addConstraint(new EntityEvent());
     }
@@ -282,6 +286,8 @@ class Sms extends FormEntity implements UuidInterface
                 ]
             )
             ->build();
+
+        self::addProjectsInLoadApiMetadata($metadata, 'sms');
     }
 
     protected function isChanged($prop, $val)

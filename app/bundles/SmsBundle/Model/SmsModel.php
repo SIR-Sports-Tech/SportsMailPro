@@ -345,7 +345,6 @@ class SmsModel extends FormModel implements AjaxLookupModelInterface, GlobalSear
                 }
 
                 $this->getRepository()->detachEntity($stat);
-                $this->getRepository()->detachEntity($stat->getLead());
             }
         }
 

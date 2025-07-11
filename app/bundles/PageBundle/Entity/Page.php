@@ -2,6 +2,8 @@
 
 namespace Mautic\PageBundle\Entity;
 
+use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\ApiBundle\Serializer\Driver\ApiMetadataDriver;
 use Mautic\CategoryBundle\Entity\Category;
@@ -14,6 +16,8 @@ use Mautic\CoreBundle\Entity\UuidTrait;
 use Mautic\CoreBundle\Entity\VariantEntityInterface;
 use Mautic\CoreBundle\Entity\VariantEntityTrait;
 use Mautic\CoreBundle\Validator\EntityEvent;
+use Mautic\ProjectBundle\Entity\ProjectTrait;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -45,6 +49,9 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
     use TranslationEntityTrait;
     use VariantEntityTrait;
     use UuidTrait;
+    use ProjectTrait;
+
+    public const TABLE_NAME = 'pages';
 
     /**
      * @var int
@@ -153,9 +160,20 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
 
     private ?PageDraft $draft = null;
 
+    private bool $isCloned = false;
+
+    private int $cloneObjectId;
+
+    /**
+     * @Groups({"page:read", "page:write", "download:read", "email:read"})
+     */
+    private ?bool $publicPreview = true;
+
     public function __clone()
     {
-        $this->id = null;
+        $this->cloneObjectId = $this->id;
+        $this->isCloned      = true;
+        $this->id            = null;
         $this->clearTranslations();
         $this->clearVariants();
         $this->setDraft(null);
@@ -167,13 +185,14 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
     {
         $this->translationChildren = new \Doctrine\Common\Collections\ArrayCollection();
         $this->variantChildren     = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->initializeProjects();
     }
 
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
 
-        $builder->setTable('pages')
+        $builder->setTable(self::TABLE_NAME)
             ->setCustomRepositoryClass(PageRepository::class)
             ->addIndex(['alias'], 'page_alias_search');
 
@@ -253,9 +272,12 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
             ->cascadeAll()
             ->build();
 
+        $builder->addNullableField('publicPreview', Types::BOOLEAN, 'public_preview');
+
         self::addTranslationMetadata($builder, self::class);
         self::addVariantMetadata($builder, self::class);
         static::addUuidField($builder);
+        self::addProjectsField($builder, 'page_projects_xref', 'page_id');
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
@@ -264,8 +286,8 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
             'message' => 'mautic.core.title.required',
         ]));
 
-        $metadata->addConstraint(new Callback([
-            'callback' => function (Page $page, ExecutionContextInterface $context): void {
+        $metadata->addConstraint(new Callback(
+            function (Page $page, ExecutionContextInterface $context): void {
                 $type = $page->getRedirectType();
                 if (!is_null($type)) {
                     $validator  = $context->getValidator();
@@ -302,7 +324,7 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
                     }
                 }
             },
-        ]));
+        ));
 
         $metadata->addConstraint(new EntityEvent());
     }
@@ -350,6 +372,8 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
             ->setMaxDepth(1, 'translationParent')
             ->setMaxDepth(1, 'translationChildren')
             ->build();
+
+        self::addProjectsInLoadApiMetadata($metadata, 'page');
     }
 
     /**
@@ -860,5 +884,33 @@ class Page extends FormEntity implements TranslationEntityInterface, VariantEnti
     public function setDraft(?PageDraft $draft): void
     {
         $this->draft = $draft;
+    }
+
+    public function getIsClone(): bool
+    {
+        return $this->isCloned;
+    }
+
+    public function getCloneObjectId(): int
+    {
+        return $this->cloneObjectId;
+    }
+
+    public function getPublicPreview(): bool
+    {
+        return $this->publicPreview;
+    }
+
+    public function isPublicPreview(): bool
+    {
+        return $this->publicPreview;
+    }
+
+    public function setPublicPreview(bool $publicPreview): self
+    {
+        $this->isChanged('publicPreview', $publicPreview);
+        $this->publicPreview = $publicPreview;
+
+        return $this;
     }
 }
