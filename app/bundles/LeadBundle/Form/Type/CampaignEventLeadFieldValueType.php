@@ -77,10 +77,23 @@ class CampaignEventLeadFieldValueType extends AbstractType
             $fieldType   = null;
             $choiceAttr  = [];
             $operator    = '=';
+            $multiple    = false;
 
             if (isset($data['field'])) {
                 $field    = $this->fieldModel->getRepository()->findOneBy(['alias' => $data['field']]);
                 $operator = $data['operator'];
+
+                // Determine if the operator supports multiple values
+                $multipleOperators = ['in', '!in'];
+                $multiple = in_array($operator, $multipleOperators);
+
+                // Convert array value to string when switching from multi-value to single-value operator
+                // This prevents "Array to string conversion" errors when changing from operators like 'in' to '='
+                if (isset($data['value']) && is_array($data['value']) && !$multiple) {
+                    // Convert array to string: use first element or empty string
+                    $data['value'] = !empty($data['value']) ? (string) reset($data['value']) : '';
+                    $e->setData($data);
+                }
 
                 if ($field) {
                     $properties = $field->getProperties();
@@ -155,6 +168,7 @@ class CampaignEventLeadFieldValueType extends AbstractType
                     ChoiceType::class,
                     [
                         'choices'           => array_flip($fieldValues),
+                        'multiple'          => $multiple,
                         'label'             => 'mautic.form.field.form.value',
                         'label_attr'        => ['class' => 'control-label'],
                         'attr'              => [
