@@ -256,6 +256,11 @@ final class TypeOperatorSubscriber implements EventSubscriberInterface
                 } elseif (!is_array($data['filter'])) {
                     $filter = [$data['filter']];
                 }
+            } else {
+                // Convert array to single value for single operators
+                if (is_array($filter)) {
+                    $filter = !empty($filter) ? (string) reset($filter) : '';
+                }
             }
 
             $form->add(

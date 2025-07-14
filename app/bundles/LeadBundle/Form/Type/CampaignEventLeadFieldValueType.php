@@ -137,7 +137,16 @@ class CampaignEventLeadFieldValueType extends AbstractType
             // Display selectbox for a field with choices, textbox for others
             if (!empty($fieldValues) && $supportsChoices) {
                 $multiple = in_array($operator, ['in', '!in']);
-                $value    = $multiple && !is_array($data['value']) ? [$data['value']] : $data['value'];
+                $value    = $data['value'];
+                
+                // Convert between single and multiple values based on operator
+                if ($multiple && !is_array($value)) {
+                    // Convert single value to array for multiple operators
+                    $value = [$value];
+                } elseif (!$multiple && is_array($value)) {
+                    // Convert array to single value for single operators
+                    $value = !empty($value) ? (string) reset($value) : '';
+                }
 
                 $form->add(
                     'value',
