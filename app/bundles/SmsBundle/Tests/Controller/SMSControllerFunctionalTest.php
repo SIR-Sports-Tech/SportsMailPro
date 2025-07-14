@@ -12,6 +12,35 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SmsControllerFunctionalTest extends MauticMysqlTestCase
 {
+    protected function setUp(): void
+    {
+        $this->configParams['site_url'] = 'https://localhost';
+        parent::setUp();
+    }
+
+    public function testSmsWithProject(): void
+    {
+        $sms = $this->CreateSms();
+
+        $project = new Project();
+        $project->setName('Test Project');
+        $this->em->persist($project);
+
+        $this->em->flush();
+        $this->em->clear();
+
+        $crawler = $this->client->request('GET', '/s/sms/edit/'.$sms->getId());
+        $form    = $crawler->selectButton('Save')->form();
+        $form['sms[projects]']->setValue((string) $project->getId());
+
+        $this->client->submit($form);
+
+        $this->assertResponseIsSuccessful();
+
+        $savedSms = $this->em->find(Sms::class, $sms->getId());
+        Assert::assertSame($project->getId(), $savedSms->getProjects()->first()->getId());
+    }
+
     public function testSmsListView(): void
     {
         $this->setupTwilio();
@@ -60,13 +89,14 @@ class SmsControllerFunctionalTest extends MauticMysqlTestCase
         );
     }
 
-    private function createSms(string $name, string $message, string $smsType): Sms
+    private function CreateSms(string $name = 'sms', string $message = 'sms body'): Sms
     {
         $sms = new Sms();
         $sms->setName($name);
         $sms->setMessage($message);
-        $sms->setSmsType($smsType);
+        $sms->setSmsType('template');
         $this->em->persist($sms);
+        $this->em->flush();
 
         return $sms;
     }
