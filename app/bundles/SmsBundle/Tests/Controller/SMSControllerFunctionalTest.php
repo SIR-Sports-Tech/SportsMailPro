@@ -10,7 +10,7 @@ use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class SmsControllerFunctionalTest extends MauticMysqlTestCase
+final class SMSControllerFunctionalTest extends MauticMysqlTestCase
 {
     protected function setUp(): void
     {
