@@ -770,4 +770,43 @@ final class ListControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertStringContainsString($translator->trans('mautic.core.recent.activity'), $this->client->getResponse()->getContent());
         $this->assertCount(2, $crawler->filterXPath('//ul[contains(@class, "media-list-feed")]/li'));
     }
+
+    public function testSegmentFilterOperatorSwitchFromMultiValueToSingleValue(): void
+    {
+        $filters = [
+            [
+                'glue'     => 'and',
+                'field'    => 'email',
+                'object'   => 'lead',
+                'type'     => 'email',
+                'operator' => 'in',
+                'properties' => [
+                    'filter' => ['test@example.com', 'another@example.com'],
+                ],
+                'display'  => '',
+            ],
+        ];
+        
+        $segment = $this->saveSegment('Test Segment', 'test-segment', $filters);
+        $this->em->clear();
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/s/segments/edit/'.$segment->getId());
+        $this->assertResponseIsSuccessful();
+        
+        $form = $crawler->selectButton('leadlist_buttons_apply')->form();
+        $form['leadlist[filters][0][operator]']->setValue('=');
+        $form['leadlist[filters][0][properties][filter]']->setValue('test@example.com');
+        
+        $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+
+        $this->em->clear();
+        $updatedSegment = $this->listRepo->find($segment->getId());
+        $updatedFilters = $updatedSegment->getFilters();
+        
+        $this->assertCount(1, $updatedFilters);
+        $this->assertSame('=', $updatedFilters[0]['operator']);
+        $this->assertIsString($updatedFilters[0]['properties']['filter']);
+        $this->assertSame('test@example.com', $updatedFilters[0]['properties']['filter']);
+    }
 }
