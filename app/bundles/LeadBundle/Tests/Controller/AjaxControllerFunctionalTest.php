@@ -626,6 +626,80 @@ class AjaxControllerFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
+    public function testGetLeadIdsByFieldValueWithOwnerInfo(): void
+    {
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->em->getRepository(User::class);
+        
+        $adminUser = $userRepository->findOneBy(['username' => 'admin']);
+        self::assertInstanceOf(User::class, $adminUser);
+
+        // Create a contact with an owner
+        $lead = new Lead();
+        $lead->setEmail('test-owner@example.com');
+        $lead->setFirstname('Test');
+        $lead->setLastname('User');
+        $lead->setOwner($adminUser);
+        
+        $this->em->persist($lead);
+        $this->em->flush();
+        
+        // Test the getLeadIdsByFieldValue action with a contact that has an owner
+        $this->client->request(Request::METHOD_GET, '/s/ajax', [
+            'action' => 'lead:getLeadIdsByFieldValue',
+            'field' => 'email',
+            'value' => 'test-owner@example.com',
+            'ignore' => 0
+        ]);
+        
+        $response = $this->client->getResponse();
+        self::assertTrue($response->isOk(), $response->getContent());
+        
+        $data = json_decode($response->getContent(), true);
+        self::assertArrayHasKey('items', $data);
+        self::assertCount(1, $data['items']);
+        
+        $leadInfo = $data['items'][0];
+        self::assertArrayHasKey('name', $leadInfo);
+        
+        // The name should include the owner information
+        self::assertStringContainsString('(Owner:', $leadInfo['name']);
+        self::assertStringContainsString($adminUser->getName(), $leadInfo['name']);
+    }
+
+    public function testGetLeadIdsByFieldValueWithoutOwner(): void
+    {
+        // Create a contact without an owner
+        $lead = new Lead();
+        $lead->setEmail('test-no-owner@example.com');
+        $lead->setFirstname('Test');
+        $lead->setLastname('NoOwner');
+        
+        $this->em->persist($lead);
+        $this->em->flush();
+        
+        // Test the getLeadIdsByFieldValue action with a contact that has no owner
+        $this->client->request(Request::METHOD_GET, '/s/ajax', [
+            'action' => 'lead:getLeadIdsByFieldValue',
+            'field' => 'email',
+            'value' => 'test-no-owner@example.com',
+            'ignore' => 0
+        ]);
+        
+        $response = $this->client->getResponse();
+        self::assertTrue($response->isOk(), $response->getContent());
+        
+        $data = json_decode($response->getContent(), true);
+        self::assertArrayHasKey('items', $data);
+        self::assertCount(1, $data['items']);
+        
+        $leadInfo = $data['items'][0];
+        self::assertArrayHasKey('name', $leadInfo);
+        
+        // The name should NOT include owner information
+        self::assertStringNotContainsString('(Owner:', $leadInfo['name']);
+    }
+
     private function createCampaign(): Campaign
     {
         $campaign = new Campaign();
