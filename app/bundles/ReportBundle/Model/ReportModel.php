@@ -12,6 +12,7 @@ use Mautic\CoreBundle\Helper\DateTimeHelper;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\FormModel;
+use Mautic\CoreBundle\Model\GlobalSearchInterface;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Model\FieldModel;
@@ -44,7 +45,7 @@ use Twig\Environment;
 /**
  * @extends FormModel<Report>
  */
-class ReportModel extends FormModel
+class ReportModel extends FormModel implements GlobalSearchInterface
 {
     public const CHANNEL_FEATURE = 'reporting';
 
@@ -73,7 +74,7 @@ class ReportModel extends FormModel
         Translator $translator,
         UserHelper $userHelper,
         LoggerInterface $mauticLogger,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
     ) {
         $this->defaultPageLimit  = $coreParametersHelper->get('default_pagelimit');
 
@@ -141,7 +142,7 @@ class ReportModel extends FormModel
     /**
      * @throws MethodNotAllowedHttpException
      */
-    protected function dispatchEvent($action, &$entity, $isNew = false, Event $event = null): ?Event
+    protected function dispatchEvent($action, &$entity, $isNew = false, ?Event $event = null): ?Event
     {
         if (!$entity instanceof Report) {
             throw new MethodNotAllowedHttpException(['Report']);
@@ -309,12 +310,9 @@ class ReportModel extends FormModel
     }
 
     /**
-     * @property filterList
-     * @property definitions
-     *
      * @param string $context
      *
-     * @return \stdClass[filterList => [], definitions => [], operatorChoices =>  [], operatorHtml => [], filterListHtml => '']
+     * return \stdClass{filterList: mixed[], definitions: mixed[], operatorChoices: mixed[], operatorHtml: mixed[], filterListHtml: string}
      */
     public function getFilterList($context = 'all'): \stdClass
     {
@@ -445,7 +443,7 @@ class ReportModel extends FormModel
      *
      * @return mixed[]
      */
-    public function getReportData(Report $entity, FormFactoryInterface $formFactory = null, array $options = []): array
+    public function getReportData(Report $entity, ?FormFactoryInterface $formFactory = null, array $options = []): array
     {
         // Clone dateFrom/dateTo because they handled separately in charts
         $chartDateFrom = isset($options['dateFrom']) ? clone $options['dateFrom'] : (new \DateTime('-30 days'));
@@ -595,7 +593,7 @@ class ReportModel extends FormModel
             }
 
             $queryTime = microtime(true);
-            $data      = $query->execute()->fetchAllAssociative();
+            $data      = $query->executeQuery()->fetchAllAssociative();
             $queryTime = round((microtime(true) - $queryTime) * 1000);
 
             if ($queryTime >= 1000) {
@@ -613,7 +611,8 @@ class ReportModel extends FormModel
             // Allow plugin to manipulate the data
             $event = new ReportDataEvent($entity, $data, $totalResults, $dataOptions);
             $this->dispatcher->dispatch($event, ReportEvents::REPORT_ON_DISPLAY);
-            $data = $event->getData();
+            $data        = $event->getData();
+            $dataOptions = $event->getOptions();
         }
 
         if ($this->isDebugMode()) {
@@ -642,7 +641,7 @@ class ReportModel extends FormModel
             'dataColumns'       => $dataColumns,
             'graphs'            => $graphs,
             'contentTemplate'   => $contentTemplate,
-            'columns'           => $tableDetails['columns'],
+            'columns'           => $dataOptions['columns'],
             'limit'             => ($paginate) ? $limit : 0,
             'page'              => ($paginate) ? $reportPage : 1,
             'dateFrom'          => $dataOptions['dateFrom'],
@@ -663,7 +662,7 @@ class ReportModel extends FormModel
     {
         $hasOrderBy = false;
         foreach ($orderBys as $key => $orderBy) {
-            if ($this->orderByIsValid($orderBy, $allowedColumns)) {
+            if ($this->orderByIsValid($orderBy, $allowedColumns->choices)) {
                 $hasOrderBy = true;
                 continue;
             }
@@ -678,8 +677,10 @@ class ReportModel extends FormModel
 
     /**
      * Check if order by is valid.
+     *
+     * @param array<string, string> $allowedColumns
      */
-    private function orderByIsValid(string $order, \stdClass $allowedColumns): bool
+    private function orderByIsValid(string $order, array $allowedColumns): bool
     {
         if (empty($order)) {
             return false;
@@ -694,7 +695,7 @@ class ReportModel extends FormModel
             $oderByDirection = $orderTemp[1];
         }
 
-        if (!array_key_exists($orderBy, $allowedColumns->choices) || !in_array($oderByDirection, ['ASC', 'DESC', ''])) {
+        if (!array_key_exists($orderBy, $allowedColumns) || !in_array($oderByDirection, ['ASC', 'DESC', ''])) {
             return false;
         }
 
@@ -804,6 +805,35 @@ class ReportModel extends FormModel
         foreach ($entities as $entity) {
             foreach ($entity->getFilters() as $entityFilter) {
                 if ($entityFilter['column'] == $search && $entityFilter['value'] == $emailId) {
+                    $dependents[] = $entity->getId();
+                }
+            }
+        }
+
+        return array_unique($dependents);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function getReportsIdsWithDependenciesOnTag(int $tagId): array
+    {
+        $search = 'tag';
+        $filter = [
+            'force'  => [
+                ['column' => 'r.filters', 'expr' => 'LIKE', 'value'=>'%'.$search.'"%'],
+            ],
+        ];
+        $entities = $this->getEntities(
+            [
+                'filter'     => $filter,
+            ]
+        );
+
+        $dependents = [];
+        foreach ($entities as $entity) {
+            foreach ($entity->getFilters() as $entityFilter) {
+                if ($entityFilter['column'] == $search && in_array($tagId, $entityFilter['value'])) {
                     $dependents[] = $entity->getId();
                 }
             }

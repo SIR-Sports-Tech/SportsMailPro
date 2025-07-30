@@ -15,6 +15,7 @@ use Mautic\CampaignBundle\Executioner\Exception\NoEventsFoundException;
 use Mautic\CampaignBundle\Executioner\Result\Counter;
 use Mautic\CampaignBundle\Executioner\Scheduler\EventScheduler;
 use Mautic\CoreBundle\Helper\ProgressBarHelper;
+use Mautic\CoreBundle\ProcessSignal\ProcessSignalService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -43,7 +44,8 @@ class ScheduledExecutioner implements ExecutionerInterface, ResetInterface
         private TranslatorInterface $translator,
         private EventExecutioner $executioner,
         private EventScheduler $scheduler,
-        private ScheduledContactFinder $scheduledContactFinder
+        private ScheduledContactFinder $scheduledContactFinder,
+        private ProcessSignalService $processSignalService,
     ) {
     }
 
@@ -56,7 +58,7 @@ class ScheduledExecutioner implements ExecutionerInterface, ResetInterface
      * @throws Scheduler\Exception\NotSchedulableException
      * @throws \Doctrine\ORM\Query\QueryException
      */
-    public function execute(Campaign $campaign, ContactLimiter $limiter, OutputInterface $output = null)
+    public function execute(Campaign $campaign, ContactLimiter $limiter, ?OutputInterface $output = null)
     {
         $this->campaign   = $campaign;
         $this->limiter    = $limiter;
@@ -88,7 +90,7 @@ class ScheduledExecutioner implements ExecutionerInterface, ResetInterface
      * @throws Scheduler\Exception\NotSchedulableException
      * @throws \Doctrine\ORM\Query\QueryException
      */
-    public function executeByIds(array $logIds, OutputInterface $output = null, ?\DateTime $now = null)
+    public function executeByIds(array $logIds, ?OutputInterface $output = null, ?\DateTime $now = null)
     {
         $now           = $now ?? $this->now ?? new \DateTime();
         $this->output  = $output ?: new NullOutput();
@@ -142,11 +144,6 @@ class ScheduledExecutioner implements ExecutionerInterface, ResetInterface
                 } catch (NoContactsFoundException) {
                     // All of the events were rescheduled
                 }
-            } else {
-                $this->executioner->recordLogsWithError(
-                    $organizedLogs,
-                    $this->translator->trans('mautic.campaign.event.campaign_unpublished')
-                );
             }
 
             $this->progressBar->advance($organizedLogs->count());
@@ -239,6 +236,8 @@ class ScheduledExecutioner implements ExecutionerInterface, ResetInterface
 
             // Execute if there are any that did not get rescheduled
             $this->executioner->executeLogs($event, $logs, $this->counter);
+
+            $this->processSignalService->throwExceptionIfSignalIsCaught();
 
             // Get next batch
             $this->scheduledContactFinder->clear($fetchedContacts);

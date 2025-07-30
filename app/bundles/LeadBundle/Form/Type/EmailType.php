@@ -22,7 +22,7 @@ class EmailType extends AbstractType
     public const REPLY_TO_ADDRESS = 'replyToAddress';
 
     public function __construct(
-        private UserHelper $userHelper
+        private UserHelper $userHelper,
     ) {
     }
 
@@ -53,7 +53,7 @@ class EmailType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'    => 'form-control',
-                    'preaddon' => 'fa fa-user',
+                    'preaddon' => 'ri-user-6-fill',
                 ],
                 'required'   => false,
                 'data'       => $default,
@@ -69,7 +69,7 @@ class EmailType extends AbstractType
                 'label_attr'  => ['class' => 'control-label'],
                 'attr'        => [
                     'class'    => 'form-control',
-                    'preaddon' => 'fa fa-envelope',
+                    'preaddon' => 'ri-mail-line',
                 ],
                 'required'    => false,
                 'data'        => $default,
@@ -92,7 +92,7 @@ class EmailType extends AbstractType
                 'label_attr' => ['class' => 'control-label'],
                 'attr'       => [
                     'class'    => 'form-control',
-                    'preaddon' => 'fa fa-envelope',
+                    'preaddon' => 'ri-mail-line',
                     'tooltip'  => 'mautic.email.reply_to_email.tooltip',
                 ],
                 'required' => false,
@@ -134,8 +134,8 @@ class EmailType extends AbstractType
             'apply_text'  => false,
             'save_text'   => 'mautic.email.send',
             'save_class'  => 'btn btn-primary',
-            'save_icon'   => 'fa fa-send',
-            'cancel_icon' => 'fa fa-times',
+            'save_icon'   => 'ri-send-plane-line',
+            'cancel_icon' => 'ri-close-line',
         ]);
 
         if (!empty($options['action'])) {
@@ -143,10 +143,7 @@ class EmailType extends AbstractType
         }
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'lead_quickemail';
     }

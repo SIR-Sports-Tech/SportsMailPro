@@ -8,14 +8,17 @@ use Mautic\CoreBundle\Doctrine\Mapping\ClassMetadataBuilder;
 use Mautic\CoreBundle\Entity\FormEntity;
 use Mautic\LeadBundle\Form\Validator\Constraints\UniqueCustomField;
 use Mautic\LeadBundle\Model\FieldModel;
+use Mautic\ProjectBundle\Entity\ProjectTrait;
 use Mautic\UserBundle\Entity\User;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 class Company extends FormEntity implements CustomFieldEntityInterface, IdentifierFieldEntityInterface
 {
     use CustomFieldEntityTrait;
+    use ProjectTrait;
 
     public const FIELD_ALIAS = 'company';
+    public const TABLE_NAME  = 'companies';
 
     /**
      * @var int
@@ -58,6 +61,11 @@ class Company extends FormEntity implements CustomFieldEntityInterface, Identifi
 
     private $description;
 
+    public function __construct()
+    {
+        $this->initializeProjects();
+    }
+
     public function __clone()
     {
         $this->id = null;
@@ -84,7 +92,7 @@ class Company extends FormEntity implements CustomFieldEntityInterface, Identifi
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('companies')
+        $builder->setTable(self::TABLE_NAME)
             ->setCustomRepositoryClass(CompanyRepository::class);
 
         $builder->createField('id', 'integer')
@@ -124,6 +132,8 @@ class Company extends FormEntity implements CustomFieldEntityInterface, Identifi
             ],
             FieldModel::$coreCompanyFields
         );
+
+        self::addProjectsField($builder, 'company_projects_xref', 'company_id');
     }
 
     /**
@@ -159,6 +169,8 @@ class Company extends FormEntity implements CustomFieldEntityInterface, Identifi
                 ]
             )
             ->build();
+
+        self::addProjectsInLoadApiMetadata($metadata, 'company');
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
@@ -230,7 +242,7 @@ class Company extends FormEntity implements CustomFieldEntityInterface, Identifi
     /**
      * @return Company
      */
-    public function setOwner(User $owner = null)
+    public function setOwner(?User $owner = null)
     {
         $this->isChanged('owner', $owner);
         $this->owner = $owner;

@@ -7,6 +7,7 @@ use Mautic\CoreBundle\Form\DataTransformer\IdToEntityModelTransformer;
 use Mautic\CoreBundle\Form\EventListener\CleanFormSubscriber;
 use Mautic\CoreBundle\Form\Type\FormButtonsType;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\ProjectBundle\Form\Type\ProjectType;
 use Mautic\UserBundle\Entity\User;
 use Mautic\UserBundle\Form\Type\UserListType;
 use Symfony\Component\Form\AbstractType;
@@ -27,7 +28,7 @@ class CompanyType extends AbstractType
     public function __construct(
         private EntityManager $em,
         protected RouterInterface $router,
-        protected TranslatorInterface $translator
+        protected TranslatorInterface $translator,
     ) {
     }
 
@@ -67,6 +68,8 @@ class CompanyType extends AbstractType
             ]
         );
 
+        $builder->add('projects', ProjectType::class);
+
         if (!empty($options['update_select'])) {
             $builder->add(
                 'buttons',
@@ -90,32 +93,40 @@ class CompanyType extends AbstractType
                 FormButtonsType::class
             );
         }
-        $builder->add(
-            'buttons',
-            FormButtonsType::class,
-            [
-                'post_extra_buttons' => [
-                    [
-                        'name'  => 'merge',
-                        'label' => 'mautic.lead.merge',
-                        'attr'  => [
-                            'class'       => 'btn btn-default btn-dnd',
-                            'icon'        => 'ri-exchange-2-line',
-                            'data-toggle' => 'ajaxmodal',
-                            'data-target' => '#MauticSharedModal',
-                            'data-header' => $this->translator->trans('mautic.lead.company.header.merge'),
-                            'href'        => $this->router->generate(
-                                'mautic_company_action',
-                                [
-                                    'objectId'     => $options['data']->getId(),
-                                    'objectAction' => 'merge',
-                                ]
-                            ),
+
+        if (null === $options['data']->getId()) {
+            $builder->add(
+                'buttons',
+                FormButtonsType::class
+            );
+        } else {
+            $builder->add(
+                'buttons',
+                FormButtonsType::class,
+                [
+                    'post_extra_buttons' => [
+                        [
+                            'name'  => 'merge',
+                            'label' => 'mautic.lead.merge',
+                            'attr'  => [
+                                'class'       => 'btn btn-ghost btn-dnd',
+                                'icon'        => 'ri-building-2-line',
+                                'data-toggle' => 'ajaxmodal',
+                                'data-target' => '#MauticSharedModal',
+                                'data-header' => $this->translator->trans('mautic.lead.company.header.merge'),
+                                'href'        => $this->router->generate(
+                                    'mautic_company_action',
+                                    [
+                                        'objectId'     => $options['data']->getId(),
+                                        'objectAction' => 'merge',
+                                    ]
+                                ),
+                            ],
                         ],
                     ],
-                ],
-            ]
-        );
+                ]
+            );
+        }
 
         $builder->addEventSubscriber(new CleanFormSubscriber($cleaningRules));
     }

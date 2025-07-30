@@ -12,7 +12,7 @@
 #}
 {% set formId = form.id %}
 <div class="table-responsive table-responsive-force">
-    <table class="table table-hover table-striped table-bordered formresult-list" id="formResultTable">
+    <table class="table table-hover formresult-list" id="formResultTable">
         <thead>
             <tr>
                 {% if canDelete %}
@@ -108,7 +108,7 @@
                       {% set isTextarea = ('textarea' == r.type) %}
                       <td {% if isTextarea %}class="long-text"{% endif %}>
                           {% if isTextarea %}
-                              {{ r.value|nl2br|e }}
+                              {{ r.value|e|nl2br }}
                           {% elseif 'file' == r.type %}
                               <a href="{{ path('mautic_form_file_download', {'submissionId': item['id'], 'field': key}) }}">
                                   {{ r.value|e }}

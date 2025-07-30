@@ -36,13 +36,28 @@ Mautic.getEntityId = function() {
 Mautic.reorderTableData = function (name, orderby, tmpl, target, baseUrl) {
     if (typeof baseUrl == 'undefined') {
         baseUrl = window.location.pathname;
+
+        // Reset to first page by modifying the path
+        baseUrl = baseUrl.replace(/\/\d+$/, '/1');
     }
 
-    if (baseUrl.indexOf('tmpl') == -1) {
-        baseUrl = baseUrl + "?tmpl=" + tmpl
+    // Start building the query parameters
+    var params = [];
+
+    if (tmpl) {
+        params.push('tmpl=' + tmpl);
     }
 
-    var route = baseUrl + "&name=" + name + "&orderby=" + encodeURIComponent(orderby);
+    if (name) {
+        params.push('name=' + name);
+    }
+
+    if (orderby) {
+        params.push('orderby=' + encodeURIComponent(orderby));
+    }
+
+    var route = baseUrl + (params.length ? '?' + params.join('&') : '');
+
     Mautic.loadContent(route, '', 'POST', target);
 };
 
@@ -184,10 +199,10 @@ Mautic.filterList = function (e, elId, route, target, liveCacheVar, action, over
                     if (mQuery(btn).length) {
                         if (action == 'clear') {
                             mQuery(btn).attr('data-livesearch-action', 'search');
-                            mQuery(btn).children('i').first().removeClass('fa-eraser').addClass('fa-search');
+                            mQuery(btn).children('i').first().removeClass('ri-eraser-line').addClass('ri-search-line');
                         } else {
                             mQuery(btn).attr('data-livesearch-action', 'clear');
-                            mQuery(btn).children('i').first().removeClass('fa-search').addClass('fa-eraser');
+                            mQuery(btn).children('i').first().removeClass('ri-search-line').addClass('ri-eraser-line');
                         }
                     }
 
@@ -206,10 +221,10 @@ Mautic.filterList = function (e, elId, route, target, liveCacheVar, action, over
                     if (mQuery(btn).length) {
                         if (action == 'clear') {
                             mQuery(btn).attr('data-livesearch-action', 'search');
-                            mQuery(btn).children('i').first().removeClass('fa-eraser').addClass('fa-search');
+                            mQuery(btn).children('i').first().removeClass('ri-eraser-line').addClass('ri-search-line');
                         } else {
                             mQuery(btn).attr('data-livesearch-action', 'clear');
-                            mQuery(btn).children('i').first().removeClass('fa-search').addClass('fa-eraser');
+                            mQuery(btn).children('i').first().removeClass('ri-search-line').addClass('ri-eraser-line');
                         }
                     }
                 },
@@ -280,10 +295,10 @@ Mautic.unlockEntity = function (model, id, parameter) {
 Mautic.togglePublishStatus = function (event, el, model, id, extra, backdrop) {
     event.preventDefault();
 
-    var wasPublished = mQuery(el).hasClass('fa-toggle-on');
+    var wasPublished = mQuery(el).hasClass('ri-toggle-fill');
     var element = mQuery(el);
 
-    element.removeClass('fa-toggle-on fa-toggle-off').addClass('fa-spin fa-spinner');
+    element.removeClass('ri-toggle-fill ri-toggle-line').addClass('ri-spin ri-loader-3-line');
 
     //destroy tooltips so it can be regenerated
     element.tooltip('destroy');
@@ -312,8 +327,8 @@ Mautic.togglePublishStatus = function (event, el, model, id, extra, backdrop) {
             }
         },
         error: function (request, textStatus, errorThrown) {
-            var addClass = (wasPublished) ? 'fa-toggle-on' : 'fa-toggle-off';
-            element.removeClass('fa-spin fa-spinner').addClass(addClass);
+            var addClass = (wasPublished) ? 'ri-toggle-fill' : 'ri-toggle-line';
+            element.removeClass('ri-spin ri-loader-3-line').addClass(addClass);
 
             Mautic.processAjaxError(request, textStatus, errorThrown);
         }

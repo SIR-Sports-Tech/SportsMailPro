@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticCrmBundle\Tests\Api;
 
+use Doctrine\ORM\EntityManager;
+use Mautic\CoreBundle\Helper\CacheStorageHelper;
+use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Exception\ApiErrorException;
 use MauticPlugin\MauticCrmBundle\Api\SalesforceApi;
 use MauticPlugin\MauticCrmBundle\Integration\SalesforceIntegration;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(SalesforceApi::class)]
 class SalesforceApiTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @testdox Test that a locked record request is retried up to 3 times
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a locked record request is retried up to 3 times')]
     public function testRecordLockedErrorIsRetriedThreeTimes(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
@@ -40,9 +43,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that a locked record request is retried up to 3 times with last one being successful so no exception should be thrown
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a locked record request is retried up to 3 times with last one being successful so no exception should be thrown')]
     public function testRecordLockedErrorIsRetriedThreeTimesWithLastOneSuccessful(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
@@ -79,9 +80,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that a locked record request is retried 2 times with 3rd being successful
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a locked record request is retried 2 times with 3rd being successful')]
     public function testRecordLockedErrorIsRetriedTwoTimesWithThirdSuccess(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
@@ -112,9 +111,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that a session expired should attempt a refresh before failing
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a session expired should attempt a refresh before failing')]
     public function testSessionExpiredIsRefreshed(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
@@ -143,9 +140,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that a session expired should attempt a refresh but not throw an exception if successful on second request
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a session expired should attempt a refresh but not throw an exception if successful on second request')]
     public function testSessionExpiredIsRefreshedWithoutThrowingExceptionOnSecondRequestWithSuccess(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
@@ -178,15 +173,13 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that an exception is thrown for all other errors
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that an exception is thrown for all other errors')]
     public function testErrorDoesNotRetryRequest(): void
     {
         $integration = $this->createMock(SalesforceIntegration::class);
         $message     = 'Fatal error';
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('makeRequest')
             ->willReturn(
                 [
@@ -208,9 +201,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @testdox Test that a backslash and a single quote are escaped for SF queries
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a backslash and a single quote are escaped for SF queries')]
     public function testCompanyQueryIsEscapedCorrectly(): void
     {
         $integration = $this->getMockBuilder(SalesforceIntegration::class)
@@ -218,7 +209,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
             ->onlyMethods(['mergeConfigToFeatureSettings', 'makeRequest', 'getQueryUrl', 'getIntegrationSettings', 'getFieldsForQuery', 'getApiUrl'])
             ->getMock();
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('mergeConfigToFeatureSettings')
             ->willReturn(
                 [
@@ -228,7 +219,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('makeRequest')
             ->willReturnCallback(
                 function ($url, $parameters = [], $method = 'GET', $settings = []): void {
@@ -255,11 +246,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    /**
-     * @testdox Test that a backslash and an html entity of single quote are escaped for SF queries
-     *
-     * @covers \MauticPlugin\MauticCrmBundle\Api\SalesforceApi::escapeQueryValue
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a backslash and an html entity of single quote are escaped for SF queries')]
     public function testCompanyQueryWithHtmlEntitiesIsEscapedCorrectly(): void
     {
         $integration = $this->getMockBuilder(SalesforceIntegration::class)
@@ -267,7 +254,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
             ->onlyMethods(['mergeConfigToFeatureSettings', 'makeRequest', 'getQueryUrl', 'getIntegrationSettings', 'getFieldsForQuery', 'getApiUrl'])
             ->getMock();
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('mergeConfigToFeatureSettings')
             ->willReturn(
                 [
@@ -277,7 +264,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('makeRequest')
             ->willReturnCallback(
                 function ($url, $parameters = [], $method = 'GET', $settings = []): void {
@@ -304,9 +291,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    /**
-     * @testdox Test that a backslash and a single quote are escaped for SF queries
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a backslash and a single quote are escaped for SF queries')]
     public function testContactQueryIsEscapedCorrectly(): void
     {
         $integration = $this->getMockBuilder(SalesforceIntegration::class)
@@ -314,7 +299,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
             ->onlyMethods(['mergeConfigToFeatureSettings', 'makeRequest', 'getQueryUrl', 'getIntegrationSettings', 'getFieldsForQuery', 'getApiUrl'])
             ->getMock();
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('mergeConfigToFeatureSettings')
             ->willReturn(
                 [
@@ -324,11 +309,11 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('getFieldsForQuery')
             ->willReturn([]);
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('makeRequest')
             ->willReturnCallback(
                 function ($url, $parameters = [], $method = 'GET', $settings = []): void {
@@ -353,9 +338,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
         ]);
     }
 
-    /**
-     * @testdox Test that a backslash and a single quote are escaped for SF queries
-     */
+    #[\PHPUnit\Framework\Attributes\TestDox('Test that a backslash and a single quote are escaped for SF queries')]
     public function testLeadQueryIsEscapedCorrectly(): void
     {
         $integration = $this->getMockBuilder(SalesforceIntegration::class)
@@ -363,7 +346,7 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
             ->onlyMethods(['mergeConfigToFeatureSettings', 'makeRequest', 'getQueryUrl', 'getIntegrationSettings', 'getFieldsForQuery', 'getApiUrl'])
             ->getMock();
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('mergeConfigToFeatureSettings')
             ->willReturn(
                 [
@@ -373,11 +356,11 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                 ]
             );
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('getFieldsForQuery')
             ->willReturn([]);
 
-        $integration->expects($this->exactly(1))
+        $integration->expects($this->once())
             ->method('makeRequest')
             ->willReturnCallback(
                 function ($url, $parameters = [], $method = 'GET', $settings = []): void {
@@ -400,5 +383,140 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                 'Email' => 'con\\tact\'email@email.com',
             ],
         ]);
+    }
+
+    public function testHandleDeletesGracefullyWithHasOptedOutOfEmailAsMissingField(): void
+    {
+        /**
+         * @phpstan-ignore-next-line
+         */
+        $cache = $this->createMock(CacheStorageHelper::class);
+
+        $cache
+            ->method('get')
+            ->withAnyParameters()
+            ->willReturn('2019-05-22 19:36:30');
+
+        $integration = $this->getMockBuilder(SalesforceIntegration::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods([
+                'mergeConfigToFeatureSettings',
+                'makeRequest',
+                'getQueryUrl',
+                'getIntegrationSettings',
+                'getFieldsForQuery',
+                'getApiUrl',
+                'getCache',
+                'getTranslator',
+                'upsertUnreadAdminsNotification',
+            ])
+            ->getMock();
+
+        $integration
+            ->expects($this->atLeastOnce())
+            ->method('getCache')
+            ->willReturn($cache);
+
+        $integration->method('getFieldsForQuery')
+            ->with('Lead')
+            ->willReturn(['firstname', 'lastname', 'HasOptedOutOfEmail']);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+
+        $integration->method('getTranslator')->willReturn($translator);
+
+        $this->expectException(ApiErrorException::class);
+        $integration->expects($this->atLeastOnce())
+            ->method('makeRequest')
+            ->willReturn(
+                [
+                    [
+                        'errorCode' => 'FATAL_ERROR',
+                        'message'   => "ERROR at Row1\nNo such column 'HasOptedOutOfEmail' on entity 'Lead'",
+                    ],
+                ]
+            );
+
+        $params['start']    = '2019-05-22 19:36:30';
+        $params['end']      = '2030-05-22 19:36:30';
+
+        $api = new SalesforceApi($integration);
+
+        self::assertEquals('2019-05-22 19:36:30', $api->getOrganizationCreatedDate());
+
+        $api->getLeads($params, 'Lead');
+    }
+
+    public function testHandleDeletesGracefully(): void
+    {
+        /**
+         * @phpstan-ignore-next-line
+         */
+        $cache = $this->createMock(CacheStorageHelper::class);
+
+        $cache
+            ->method('get')
+            ->withAnyParameters()
+            ->willReturn('2019-05-22 19:36:30');
+
+        $integration = $this->getMockBuilder(SalesforceIntegration::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods([
+                'mergeConfigToFeatureSettings',
+                'makeRequest',
+                'getQueryUrl',
+                'getIntegrationSettings',
+                'getFieldsForQuery',
+                'getApiUrl',
+                'getCache',
+                'getTranslator',
+                'upsertUnreadAdminsNotification',
+                'getEntityManager',
+            ])
+            ->getMock();
+
+        $integration
+            ->expects($this->atLeastOnce())
+            ->method('getCache')
+            ->willReturn($cache);
+
+        $integration->method('getFieldsForQuery')
+            ->with('Lead')
+            ->willReturn(['firstname', 'lastname', 'extraField']);
+
+        $integration->expects($this->never())->method('upsertUnreadAdminsNotification');
+
+        $entityManager = $this->createMock(EntityManager::class);
+
+        $entity = $this
+            ->getMockBuilder(Integration::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getFeatureSettings', 'setFeatureSettings'])
+            ->getMock();
+
+        $integration->method('getEntityManager')->willReturn($entityManager);
+        $integration->method('getIntegrationSettings')->willReturn($entity);
+        $entity->method('getFeatureSettings')->willReturn(['leadFields' => ['extraField__Lead' => '']]);
+
+        $this->expectException(ApiErrorException::class);
+        $integration->expects($this->atLeastOnce())
+            ->method('makeRequest')
+            ->willReturn(
+                [
+                    [
+                        'errorCode' => 'FATAL_ERROR',
+                        'message'   => "ERROR at Row1\nNo such column 'extraField' on entity 'Lead'",
+                    ],
+                ]
+            );
+
+        $params['start']    = '2019-05-22 19:36:30';
+        $params['end']      = '2030-05-22 19:36:30';
+
+        $api = new SalesforceApi($integration);
+
+        self::assertEquals('2019-05-22 19:36:30', $api->getOrganizationCreatedDate());
+
+        $api->getLeads($params, 'Lead');
     }
 }

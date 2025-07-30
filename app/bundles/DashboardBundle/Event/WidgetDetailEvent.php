@@ -2,7 +2,7 @@
 
 namespace Mautic\DashboardBundle\Event;
 
-use Mautic\CacheBundle\Cache\CacheProvider;
+use Mautic\CacheBundle\Cache\CacheProviderTagAwareInterface;
 use Mautic\CoreBundle\Event\CommonEvent;
 use Mautic\CoreBundle\Helper\CacheStorageHelper;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
@@ -12,6 +12,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class WidgetDetailEvent extends CommonEvent
 {
+    public const DASHBOARD_CACHE_TAG = 'dashboard_widget';
+
     protected $type;
 
     protected $template;
@@ -36,7 +38,7 @@ class WidgetDetailEvent extends CommonEvent
 
     private bool $isPreview = false;
 
-    public function __construct(private TranslatorInterface $translator, private CorePermissions $security, protected Widget $widget, private ?CacheProvider $cacheProvider = null)
+    public function __construct(private TranslatorInterface $translator, private CorePermissions $security, protected Widget $widget, private ?CacheProviderTagAwareInterface $cacheProvider = null)
     {
         $this->startTime = microtime(true);
         $this->setWidget($widget);
@@ -220,6 +222,7 @@ class WidgetDetailEvent extends CommonEvent
             $cItem->expiresAfter((int) $this->widget->getCacheTimeout() * 60);  // This is in minutes
         }
         $cItem->set($templateData);
+        $cItem->tag(self::DASHBOARD_CACHE_TAG);
 
         $this->cacheProvider->save($cItem);
     }

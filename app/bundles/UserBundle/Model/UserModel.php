@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManager;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\FormModel;
+use Mautic\CoreBundle\Model\GlobalSearchInterface;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\EmailBundle\Helper\MailHelper;
@@ -30,7 +31,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 /**
  * @extends FormModel<User>
  */
-class UserModel extends FormModel
+class UserModel extends FormModel implements GlobalSearchInterface
 {
     public function __construct(
         protected MailHelper $mailHelper,
@@ -42,7 +43,7 @@ class UserModel extends FormModel
         Translator $translator,
         UserHelper $userHelper,
         LoggerInterface $mauticLogger,
-        CoreParametersHelper $coreParametersHelper
+        CoreParametersHelper $coreParametersHelper,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $mauticLogger, $coreParametersHelper);
     }
@@ -106,9 +107,6 @@ class UserModel extends FormModel
         return $entity->getPassword();
     }
 
-    /**
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     */
     public function createForm($entity, FormFactoryInterface $formFactory, $action = null, $options = []): \Symfony\Component\Form\FormInterface
     {
         if (!$entity instanceof User) {
@@ -157,7 +155,7 @@ class UserModel extends FormModel
     /**
      * @throws MethodNotAllowedHttpException
      */
-    protected function dispatchEvent($action, &$entity, $isNew = false, Event $event = null): ?Event
+    protected function dispatchEvent($action, &$entity, $isNew = false, ?Event $event = null): ?Event
     {
         if (!$entity instanceof User) {
             throw new MethodNotAllowedHttpException(['User'], 'Entity must be of class User()');
@@ -289,6 +287,44 @@ class UserModel extends FormModel
         );
     }
 
+    /**
+     * @throws \RuntimeException
+     */
+    public function sendChangePasswordInfo(User $user): void
+    {
+        $text = $this->translator->trans(
+            'mautic.user.user.passwordchange.email.body',
+            ['%name%' => $user->getFirstName()]
+        );
+        $text = str_replace('\\n', "\n", $text);
+        $html = nl2br($text);
+
+        $this->emailUser(
+            $user,
+            $this->translator->trans('mautic.user.user.passwordchange.subject'),
+            $html
+        );
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    public function sendChangeEmailInfo(string $oldEmail, User $user): void
+    {
+        $mailer = $this->mailHelper->getMailer();
+        $text   = $this->translator->trans(
+            'mautic.user.user.emailchange.email.body',
+            ['%name%' => $user->getFirstName()]
+        );
+        $text = str_replace('\\n', "\n", $text);
+        $html = nl2br($text);
+
+        $mailer->setTo([$oldEmail => $user->getName()]);
+        $mailer->setBody($html);
+        $mailer->setSubject($this->translator->trans('mautic.user.user.emailchange.subject'));
+        $mailer->send();
+    }
+
     public function emailUser(User $user, string $subject, string $content): void
     {
         $mailer  = $this->prepareEMail($subject, $content);
@@ -321,7 +357,7 @@ class UserModel extends FormModel
     /**
      * Set user preference.
      */
-    public function setPreference($key, $value = null, User $user = null): void
+    public function setPreference($key, $value = null, ?User $user = null): void
     {
         if (null == $user) {
             $user = $this->userHelper->getUser();
@@ -338,7 +374,7 @@ class UserModel extends FormModel
     /**
      * Get user preference.
      */
-    public function getPreference($key, $default = null, User $user = null)
+    public function getPreference($key, $default = null, ?User $user = null)
     {
         if (null == $user) {
             $user = $this->userHelper->getUser();

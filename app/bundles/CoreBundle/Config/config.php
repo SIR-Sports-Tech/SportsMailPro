@@ -7,14 +7,6 @@ return [
                 'path'       => '/ajax',
                 'controller' => 'Mautic\CoreBundle\Controller\AjaxController::delegateAjaxAction',
             ],
-            'mautic_core_update' => [
-                'path'       => '/update',
-                'controller' => 'Mautic\CoreBundle\Controller\UpdateController::indexAction',
-            ],
-            'mautic_core_update_schema' => [
-                'path'       => '/update/schema',
-                'controller' => 'Mautic\CoreBundle\Controller\UpdateController::schemaAction',
-            ],
             'mautic_core_form_action' => [
                 'path'       => '/action/{objectAction}/{objectModel}/{objectId}',
                 'controller' => 'Mautic\CoreBundle\Controller\FormController::executeAction',
@@ -111,26 +103,30 @@ return [
         'main' => [
             'mautic.core.components' => [
                 'id'        => 'mautic_components_root',
-                'iconClass' => 'ri-puzzle-fill',
+                'iconClass' => 'ri-archive-2-fill',
                 'priority'  => 60,
             ],
             'mautic.core.channels' => [
                 'id'        => 'mautic_channels_root',
-                'iconClass' => 'ri-rss-fill',
+                'iconClass' => 'ri-remote-control-fill',
                 'priority'  => 40,
             ],
         ],
         'admin' => [
+            'mautic.core.general' => [
+                'id'        => 'mautic_general_root',
+                'priority'  => 15,
+            ],
             'mautic.theme.menu.index' => [
                 'route'     => 'mautic_themes_index',
-                'iconClass' => 'ri-palette-fill',
+                'iconClass' => 'ri-pantone-line',
                 'id'        => 'mautic_themes_index',
                 'access'    => 'core:themes:view',
+                'parent'    => 'mautic.core.general',
                 'priority'  => 18,
             ],
             'mautic.core.integrations' => [
                 'id'        => 'mautic_integrations_root',
-                'iconClass' => 'ri-plug-fill',
                 'priority'  => 15,
             ],
         ],
@@ -154,7 +150,6 @@ return [
             'mautic.core.service.flashbag' => [
                 'class'     => Mautic\CoreBundle\Service\FlashBag::class,
                 'arguments' => [
-                    '@session',
                     'translator',
                     'request_stack',
                     'mautic.core.model.notification',
@@ -195,6 +190,7 @@ return [
                 'class'     => Mautic\CoreBundle\Form\Type\DynamicContentFilterEntryFiltersType::class,
                 'arguments' => [
                     'translator',
+                    'mautic.lead.model.list',
                 ],
                 'methodCalls' => [
                     'setConnection' => [
@@ -489,7 +485,7 @@ return [
             'mautic.page.helper.factory' => [
                 'class'     => Mautic\CoreBundle\Factory\PageHelperFactory::class,
                 'arguments' => [
-                    'session',
+                    'request_stack',
                     'mautic.helper.core_parameters',
                 ],
             ],
@@ -501,11 +497,6 @@ return [
                 ],
                 'tag'       => 'translation.loader',
                 'alias'     => 'mautic',
-            ],
-            'mautic.tblprefix_subscriber' => [
-                'class'     => Mautic\CoreBundle\EventListener\DoctrineEventsSubscriber::class,
-                'tag'       => 'doctrine.event_subscriber',
-                'arguments' => '%mautic.db_table_prefix%',
             ],
             'mautic.database.version.provider' => [
                 'class'     => Mautic\CoreBundle\Doctrine\Provider\VersionProvider::class,
@@ -583,7 +574,7 @@ return [
                 'class'     => Mautic\CoreBundle\Helper\CacheHelper::class,
                 'arguments' => [
                     '%kernel.cache_dir%',
-                    'session',
+                    'request_stack',
                     'mautic.helper.paths',
                     'kernel',
                 ],
@@ -614,14 +605,6 @@ return [
             ],
             'mautic.helper.url' => [
                 'class'     => Mautic\CoreBundle\Helper\UrlHelper::class,
-            ],
-            'mautic.helper.export' => [
-                'class'     => Mautic\CoreBundle\Helper\ExportHelper::class,
-                'arguments' => [
-                    'translator',
-                    'mautic.helper.core_parameters',
-                    'mautic.helper.file_path_resolver',
-                ],
             ],
             'mautic.helper.composer' => [
                 'class'     => Mautic\CoreBundle\Helper\ComposerHelper::class,
@@ -676,6 +659,7 @@ return [
                     'monolog.logger.mautic',
                     'mautic.http.client',
                     '%kernel.cache_dir%',
+                    'mautic.helper.core_parameters',
                 ],
             ],
             'mautic.ip_lookup' => [
@@ -764,7 +748,7 @@ return [
                 'arguments' => [
                     'translator',
                     'mautic.helper.paths',
-                    'session',
+                    'request_stack',
                     'mautic.helper.app_version',
                 ],
                 'tag' => 'mautic.update_step',
@@ -898,6 +882,9 @@ return [
         'tmp_path'                        => '%kernel.project_dir%/var/tmp',
         'theme'                           => 'blank',
         'theme_import_allowed_extensions' => ['json', 'twig', 'css', 'js', 'htm', 'html', 'txt', 'jpg', 'jpeg', 'png', 'gif'],
+        'brand_name'                      => 'Your Brand (configurable)',
+        'primary_brand_color'             => '000000',
+        'rounded_corners'                 => '0',
         'db_driver'                       => 'pdo_mysql',
         'db_host'                         => '127.0.0.1',
         'db_port'                         => 3306,
@@ -1435,7 +1422,6 @@ return [
             ],
         ],
         'composer_updates'                                        => false,
-        'load_froala_assets'                                      => false, // As we cannot remove the legacy builder in M5 we require users to enable Froala assets and agree with its security vulnerabilities.
         'redis_primary_only'                                      => false,
         Mautic\CoreBundle\Shortener\Shortener::SHORTENER_SERVICE  => null,
         'gdpr_user_purge_threshold'                               => 1095, // Minimum no. of days a user has to be inactive to get picked up by `mautic:maintenance:cleanup --gdpr`

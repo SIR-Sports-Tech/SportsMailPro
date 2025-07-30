@@ -66,7 +66,7 @@ class StatRepository extends CommonRepository
      *
      * @param array $dynamicContentIds
      */
-    public function getSentCounts($dynamicContentIds = [], \DateTime $fromDate = null): array
+    public function getSentCounts($dynamicContentIds = [], ?\DateTime $fromDate = null): array
     {
         $q = $this->_em->getConnection()->createQueryBuilder();
         $q->select('s.dynamic_content_id, count(s.id) as sent_count')
@@ -124,7 +124,7 @@ class StatRepository extends CommonRepository
             );
         }
 
-        return $this->getTimelineResults($query, $options, 'dc.name', 's.date_sent', ['sentDetails'], ['dateSent']);
+        return $this->getTimelineResults($query, $options, 'dc.name', 's.date_sent', ['sentDetails'], ['dateSent'], null, 's.id');
     }
 
     /**

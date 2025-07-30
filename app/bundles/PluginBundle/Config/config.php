@@ -52,6 +52,7 @@ return [
                     'access'    => 'plugin:plugins:manage',
                     'route'     => 'mautic_plugin_index',
                     'parent'    => 'mautic.core.integrations',
+                    'iconClass' => 'ri-plug-line',
                 ],
             ],
         ],
@@ -75,7 +76,6 @@ return [
                 'class'     => Mautic\PluginBundle\Helper\ReloadHelper::class,
                 'arguments' => [
                     'event_dispatcher',
-                    'mautic.factory',
                 ],
             ],
         ],

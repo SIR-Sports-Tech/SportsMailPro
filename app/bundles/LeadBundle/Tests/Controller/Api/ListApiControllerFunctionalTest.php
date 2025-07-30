@@ -7,6 +7,7 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Model\ListModel;
 use PHPUnit\Framework\Assert;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -25,6 +26,70 @@ class ListApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->listModel  = static::getContainer()->get('mautic.lead.model.list');
         $this->prefix     = static::getContainer()->getParameter('mautic.db_table_prefix');
         $this->translator = static::getContainer()->get('translator');
+    }
+
+    protected function beforeBeginTransaction(): void
+    {
+        $this->resetAutoincrement(['categories']);
+    }
+
+    /**
+     * @return iterable<array<string|int|null>>
+     */
+    public static function regexOperatorProvider(): iterable
+    {
+        yield [
+            'regexp',
+            '^{Test|Test string)', // invalid regex: the first parantheses should not be curly
+            Response::HTTP_BAD_REQUEST,
+            'error',
+        ];
+
+        yield [
+            '!regexp',
+            '^(Test|Test string))', // invalid regex: 2 ending parantheses
+            Response::HTTP_BAD_REQUEST,
+            'error',
+        ];
+
+        yield [
+            'regexp',
+            '^(Test|Test string)', // valid regex
+            Response::HTTP_CREATED,
+            null,
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('regexOperatorProvider')]
+    public function testRegexOperatorValidation(string $operator, string $regex, int $expectedResponseCode, ?string $expectedErrorMessage): void
+    {
+        $this->client->request(
+            Request::METHOD_POST,
+            '/api/segments/new',
+            [
+                'name'    => 'Regex test',
+                'filters' => [
+                    [
+                        'glue'       => 'and',
+                        'field'      => 'city',
+                        'object'     => 'lead',
+                        'type'       => 'text',
+                        'operator'   => $operator,
+                        'properties' => ['filter' => $regex],
+                    ],
+                ],
+            ]
+        );
+
+        Assert::assertSame($expectedResponseCode, $this->client->getResponse()->getStatusCode());
+
+        if ($expectedErrorMessage) {
+            Assert::assertStringContainsString(
+                $expectedErrorMessage,
+                json_decode($this->client->getResponse()->getContent(), true)['errors'][0]['message'],
+                $this->client->getResponse()->getContent()
+            );
+        }
     }
 
     public function testSingleSegmentWorkflow(): void
@@ -483,7 +548,7 @@ class ListApiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $response['lists']);
     }
 
-    private function saveSegment(string $name, string $alias, array $filters = [], LeadList $segment = null): LeadList
+    private function saveSegment(string $name, string $alias, array $filters = [], ?LeadList $segment = null): LeadList
     {
         $segment ??= new LeadList();
         $segment->setName($name)->setPublicName($name)->setAlias($alias)->setFilters($filters);

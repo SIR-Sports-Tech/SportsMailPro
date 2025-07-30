@@ -6,10 +6,10 @@ use Doctrine\Persistence\ManagerRegistry;
 use Mautic\ApiBundle\Controller\CommonApiController;
 use Mautic\ApiBundle\Helper\EntityResultHelper;
 use Mautic\CampaignBundle\Entity\Campaign;
+use Mautic\CampaignBundle\Entity\Event;
 use Mautic\CampaignBundle\Membership\MembershipManager;
 use Mautic\CampaignBundle\Model\CampaignModel;
 use Mautic\CampaignBundle\Model\EventModel;
-use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\CoreBundle\Factory\ModelFactory;
 use Mautic\CoreBundle\Helper\AppVersion;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
@@ -23,6 +23,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Validator\ConstraintViolationInterface;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * @extends CommonApiController<Campaign>
@@ -49,7 +52,8 @@ class CampaignApiController extends CommonApiController
         ModelFactory $modelFactory,
         EventDispatcherInterface $dispatcher,
         CoreParametersHelper $coreParametersHelper,
-        MauticFactory $factory
+        private ValidatorInterface $validator,
+        private EventModel $eventModel,
     ) {
         $campaignModel = $modelFactory->getModel('campaign');
         \assert($campaignModel instanceof CampaignModel);
@@ -59,9 +63,17 @@ class CampaignApiController extends CommonApiController
         $this->entityNameOne     = 'campaign';
         $this->entityNameMulti   = 'campaigns';
         $this->permissionBase    = 'campaign:campaigns';
-        $this->serializerGroups  = ['campaignDetails', 'campaignEventDetails', 'categoryList', 'publishDetails', 'leadListList', 'formList'];
+        $this->serializerGroups  = [
+            'campaignDetails',
+            'campaignEventDetails',
+            'categoryList',
+            'publishDetails',
+            'leadListList',
+            'formList',
+            'projectList',
+        ];
 
-        parent::__construct($security, $translator, $entityResultHelper, $router, $formFactory, $appVersion, $requestStack, $doctrine, $modelFactory, $dispatcher, $coreParametersHelper, $factory);
+        parent::__construct($security, $translator, $entityResultHelper, $router, $formFactory, $appVersion, $requestStack, $doctrine, $modelFactory, $dispatcher, $coreParametersHelper);
     }
 
     /**
@@ -211,6 +223,34 @@ class CampaignApiController extends CommonApiController
             $this->model->setEvents($entity, $parameters['events'], $parameters['canvasSettings'], $deletedEvents);
         }
 
+        /** @var array<ConstraintViolationListInterface<ConstraintViolationInterface>> $eventViolations */
+        $eventViolations = array_filter(
+            array_map(
+                fn (Event $event) => $this->validator->validate($event),
+                $entity->getEvents()->toArray()
+            ),
+            fn ($error) => $error->count() > 0
+        );
+
+        if (count($eventViolations) > 0) {
+            $errors = [];
+            foreach ($eventViolations as $violationList) {
+                foreach ($violationList as $violation) {
+                    \assert($violation instanceof ConstraintViolationInterface);
+                    $errors[] = [
+                        'code'    => $violation->getCode(),
+                        'message' => $violation->getMessage(),
+                        'details' => $violation->getPropertyPath(),
+                        'type'    => 'validation',
+                    ];
+                }
+            }
+
+            $view = $this->view(['errors' => $errors], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+            return $this->handleView($view);
+        }
+
         // Persist to the database before building connection so that IDs are available
         $this->model->saveEntity($entity);
 
@@ -220,9 +260,7 @@ class CampaignApiController extends CommonApiController
         }
 
         if (Request::METHOD_PUT === $method && !empty($deletedEvents)) {
-            $campaignEventModel = $this->getModel('campaign.event');
-            \assert($campaignEventModel instanceof EventModel);
-            $campaignEventModel->deleteEvents($entity->getEvents()->toArray(), $deletedEvents);
+            $this->eventModel->deleteEvents($entity->getEvents()->toArray(), $deletedEvents);
         }
     }
 

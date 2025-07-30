@@ -14,10 +14,7 @@ use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
-/**
- * Povides caching mechanism using adapters, it provides both PSR-6 and PSR-16.
- */
-final class CacheProvider implements CacheProviderInterface
+final class CacheProvider extends AbstractCacheProvider
 {
     private ?Psr16Cache $psr16 = null;
 

@@ -7,23 +7,48 @@
     <ul class="nav navbar-nav navbar-left">
         <li class="visible-xs">
             <a href="javascript: void(0);" data-toggle="sidebar" data-direction="ltr">
-                <i class="fa fa-navicon fs-16"></i>
+                <i class="ri-menu-line fs-16"></i>
             </a>
         </li>
-        {{ render(controller('Mautic\\CoreBundle\\Controller\\DefaultController::globalSearchAction')) }}
+        <!-- brand -->
+         <li>
+            <a class="pa-0" href="{{ path('mautic_dashboard_index') }}">
+                <div class="brand-logo--desktop mautic-brand hidden-xs pl-md pr-lg">
+                    {{ source('@MauticCore/Assets/images/logo--expanded.svg') }}
+                </div>
+                <div class="brand-logo--mobile mautic-brand visible-xs pr-sm">
+                    {{ source('@MauticCore/Assets/images/logo--minimized.svg') }}
+                </div>
+            </a>
+            <!--/ brand -->
+         </li>
+        {% include '@MauticCore/Helper/button.html.twig' with {
+            buttons: [
+                {
+                    label: 'mautic.core.search_everything',
+                    tooltip_placement: 'right',
+                    variant: 'ghost',
+                    icon: 'ri-search-line ri-xl',
+                    icon_only: true,
+                    attributes: {
+                    'type': 'button',
+                    'data-toggle': 'modal',
+                    'data-target': '#gsearchModal',
+                    'class': 'search-button'
+                }
+                }
+            ]
+        } %}
+
     </ul>
     <!--/ end: left nav -->
 
     <!-- start: right nav -->
     <ul class="nav navbar-nav navbar-right">
-        
-        {{ include('@MauticCore/Menu/profile.html.twig') }}
         {{ render(controller('Mautic\\CoreBundle\\Controller\\DefaultController::notificationsAction')) }}
-        <li>
-            <a href="javascript: void(0);" data-toggle="sidebar" data-direction="rtl">
-                <i class="ri-settings-5-line ri-xl"></i>
-            </a>
-        </li>
+        {{ include('@MauticCore/Menu/quick_help.html.twig') }}
+        {{ menuRender('admin') }}
+        {{ include('@MauticCore/Menu/profile.html.twig') }}
     </ul>
     <div class="navbar-toolbar pull-right mt-15 mr-10">
     {{ buttonReset(constant('Mautic\\CoreBundle\\Twig\\Helper\\ButtonHelper::LOCATION_NAVBAR')) }}

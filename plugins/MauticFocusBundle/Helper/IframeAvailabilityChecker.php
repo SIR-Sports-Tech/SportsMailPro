@@ -15,7 +15,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class IframeAvailabilityChecker
 {
     public function __construct(
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -106,7 +106,7 @@ class IframeAvailabilityChecker
         return $return;
     }
 
-    private function headerContains(array $headers, string $name, string $content = null): bool
+    private function headerContains(array $headers, string $name, ?string $content = null): bool
     {
         $headers = array_change_key_case($headers, CASE_LOWER);
 

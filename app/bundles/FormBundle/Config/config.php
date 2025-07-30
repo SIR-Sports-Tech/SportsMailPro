@@ -114,6 +114,11 @@ return [
                 'path'       => '/form/submit/ajax',
                 'controller' => 'Mautic\FormBundle\Controller\AjaxController::submitAction',
             ],
+            'mautic_form_company_lookup' => [
+                'path'       => '/form/company-lookup/autocomplete',
+                'controller' => 'Mautic\FormBundle\Controller\PublicController::lookupCompanyAction',
+                'method'     => 'POST',
+            ],
         ],
     ],
 
@@ -131,7 +136,9 @@ return [
     ],
 
     'categories' => [
-        'form' => null,
+        'form' => [
+            'class' => Mautic\FormBundle\Entity\Form::class,
+        ],
     ],
 
     'services' => [
@@ -183,7 +190,7 @@ return [
             ],
             'mautic.form.collector.already.mapped.field' => [
                 'class'     => Mautic\FormBundle\Collector\AlreadyMappedFieldCollector::class,
-                'arguments' => ['mautic.cache.provider'],
+                'arguments' => ['mautic.cache.provider_tag_aware'],
             ],
             'mautic.helper.form.field_helper' => [
                 'class'     => FormFieldHelper::class,

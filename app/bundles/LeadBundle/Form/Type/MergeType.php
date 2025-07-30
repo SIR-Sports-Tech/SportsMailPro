@@ -45,7 +45,7 @@ class MergeType extends AbstractType
             [
                 'apply_text' => false,
                 'save_text'  => 'mautic.lead.merge',
-                'save_icon'  => 'fa fa-user',
+                'save_icon'  => 'ri-user-6-line',
             ]
         );
 
@@ -59,10 +59,7 @@ class MergeType extends AbstractType
         $resolver->setRequired(['leads']);
     }
 
-    /**
-     * @return string
-     */
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'lead_merge';
     }

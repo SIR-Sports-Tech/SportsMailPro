@@ -16,7 +16,7 @@ class UtmTagRepository extends CommonRepository
      *
      * @return array
      */
-    public function getUtmTagsByLead(Lead $lead = null, $options = [])
+    public function getUtmTagsByLead(?Lead $lead = null, $options = [])
     {
         $qb = $this->getEntityManager()->getConnection()->createQueryBuilder()
             ->select('*')
@@ -36,6 +36,6 @@ class UtmTagRepository extends CommonRepository
             ));
         }
 
-        return $this->getTimelineResults($qb, $options, 'ut.utm_campaign', 'ut.date_added', ['query'], ['date_added']);
+        return $this->getTimelineResults($qb, $options, 'ut.utm_campaign', 'ut.date_added', ['query'], ['date_added'], null, 'ut.id');
     }
 }

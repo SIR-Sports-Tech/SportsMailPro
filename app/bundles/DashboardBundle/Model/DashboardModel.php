@@ -3,6 +3,7 @@
 namespace Mautic\DashboardBundle\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Mautic\CacheBundle\Cache\CacheProviderTagAwareInterface;
 use Mautic\CoreBundle\Helper\CacheStorageHelper;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\Filesystem;
@@ -15,6 +16,7 @@ use Mautic\CoreBundle\Translation\Translator;
 use Mautic\DashboardBundle\DashboardEvents;
 use Mautic\DashboardBundle\Entity\Widget;
 use Mautic\DashboardBundle\Entity\WidgetRepository;
+use Mautic\DashboardBundle\Event\WidgetDetailEvent;
 use Mautic\DashboardBundle\Factory\WidgetDetailEventFactory;
 use Mautic\DashboardBundle\Form\Type\WidgetType;
 use Psr\Log\LoggerInterface;
@@ -42,7 +44,8 @@ class DashboardModel extends FormModel
         UrlGeneratorInterface $router,
         Translator $translator,
         UserHelper $userHelper,
-        LoggerInterface $mauticLogger
+        LoggerInterface $mauticLogger,
+        private CacheProviderTagAwareInterface $cacheProvider,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $mauticLogger, $coreParametersHelper);
     }
@@ -207,8 +210,15 @@ class DashboardModel extends FormModel
      */
     public function populateWidgetContent(Widget $widget, $filter = []): void
     {
+        $defaultTimeout = $this->coreParametersHelper->get('cached_data_timeout');
+
+        // Timeout 0 will be interpreted as endless cache, so we set it to -1 which will be interpreted as no cache
+        if (0 === $defaultTimeout) {
+            $defaultTimeout = -1;
+        }
+
         if (null === $widget->getCacheTimeout() || -1 === $widget->getCacheTimeout()) {
-            $widget->setCacheTimeout($this->coreParametersHelper->get('cached_data_timeout'));
+            $widget->setCacheTimeout($defaultTimeout);
         }
 
         // Merge global filter with widget params
@@ -244,6 +254,8 @@ class DashboardModel extends FormModel
         $cacheStorage = new CacheStorageHelper(CacheStorageHelper::ADAPTOR_FILESYSTEM, $this->userHelper->getUser()->getId(), null, $cacheDir);
 
         $cacheStorage->clear();
+
+        $this->cacheProvider->invalidateTags([WidgetDetailEvent::DASHBOARD_CACHE_TAG]);
     }
 
     /**
