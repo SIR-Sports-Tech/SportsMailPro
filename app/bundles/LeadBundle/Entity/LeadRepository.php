@@ -30,6 +30,8 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
     use ExpressionHelperTrait;
     use OperatorListTrait;
 
+    private static LeadFieldRepository $leadFieldRepository;
+
     /**
      * @var EventDispatcherInterface
      */
@@ -89,6 +91,16 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
     public function setListLeadRepository(ListLeadRepository $listLeadRepository): void
     {
         $this->listLeadRepository = $listLeadRepository;
+    }
+
+    public function setLeadFieldRepository(LeadFieldRepository $leadFieldRepository): void
+    {
+        self::$leadFieldRepository = $leadFieldRepository;
+    }
+
+    public static function getLeadFieldRepository(): LeadFieldRepository
+    {
+        return self::$leadFieldRepository;
     }
 
     /**
@@ -356,6 +368,17 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
         return $results[0] ?? [];
     }
 
+    public function exists(string $id): bool
+    {
+        $query = $this->getEntityManager()->getConnection()->createQueryBuilder();
+        $query->select('1')
+            ->from(MAUTIC_TABLE_PREFIX.'leads', 'l')
+            ->where('l.id = :id')
+            ->setParameter('id', $id);
+
+        return (bool) $query->executeQuery()->fetchOne();
+    }
+
     /**
      * @param int $id
      */
@@ -588,10 +611,10 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
         $entityId,
         $filters = [],
         $entityColumnName = 'id',
-        array $additionalJoins = null,
+        ?array $additionalJoins = null,
         $contactColumnName = 'lead_id',
-        \DateTimeInterface $dateFrom = null,
-        \DateTimeInterface $dateTo = null,
+        ?\DateTimeInterface $dateFrom = null,
+        ?\DateTimeInterface $dateTo = null,
     ): array {
         $qb = $this->getEntitiesDbalQueryBuilder();
 

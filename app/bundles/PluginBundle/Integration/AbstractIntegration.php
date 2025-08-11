@@ -817,7 +817,7 @@ abstract class AbstractIntegration implements UnifiedIntegrationInterface
         $integrationEntityId,
         $internalEntity,
         $internalEntityId,
-        array $internal = null,
+        ?array $internal = null,
         $persist = true,
     ): ?IntegrationEntity {
         $date = (defined('MAUTIC_DATE_MODIFIED_OVERRIDE')) ? \DateTime::createFromFormat('U', MAUTIC_DATE_MODIFIED_OVERRIDE)
@@ -1913,7 +1913,7 @@ abstract class AbstractIntegration implements UnifiedIntegrationInterface
         return $this->notificationModel;
     }
 
-    public function logIntegrationError(\Exception $e, Lead $contact = null): void
+    public function logIntegrationError(\Exception $e, ?Lead $contact = null): void
     {
         $logger = $this->logger;
 
@@ -1973,7 +1973,7 @@ abstract class AbstractIntegration implements UnifiedIntegrationInterface
                         $this->getName(),
                         false,
                         $errorHeader,
-                        'text-danger ri-error-warning-line-circle',
+                        'text-danger ri-error-warning-line',
                         null,
                         $user
                     );

@@ -24,9 +24,11 @@ use Mautic\CoreBundle\Helper\UrlHelper;
 use Mautic\CoreBundle\Validator\EntityEvent;
 use Mautic\EmailBundle\Validator\EmailLists;
 use Mautic\EmailBundle\Validator\EmailOrEmailTokenList;
+use Mautic\EmailBundle\Validator\TextOnlyDynamicContent;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\PageBundle\Entity\Page;
+use Mautic\ProjectBundle\Entity\ProjectTrait;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\Length;
@@ -60,6 +62,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
     use TranslationEntityTrait;
     use DynamicContentEntityTrait;
     use UuidTrait;
+    use ProjectTrait;
 
     /**
      * @var int
@@ -338,6 +341,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
         $this->assetAttachments    = new ArrayCollection();
         $this->setDateAdded(new \DateTime());
         $this->setDateModified(new \DateTime());
+        $this->initializeProjects();
     }
 
     public function clearStats(): void
@@ -429,6 +433,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
             ->build();
 
         static::addUuidField($builder);
+        self::addProjectsField($builder, 'email_projects_xref', 'email_id');
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
@@ -494,11 +499,13 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
             )
         );
 
+        $metadata->addPropertyConstraint('subject', new TextOnlyDynamicContent());
+
         $metadata->addConstraint(new EmailLists());
         $metadata->addConstraint(new EntityEvent());
 
-        $metadata->addConstraint(new Callback([
-            'callback' => function (Email $email, ExecutionContextInterface $context): void {
+        $metadata->addConstraint(new Callback(
+            function (Email $email, ExecutionContextInterface $context): void {
                 if ($email->isVariant()) {
                     // Get a summation of weights
                     $parent   = $email->getVariantParent();
@@ -517,7 +524,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
                     }
                 }
             },
-        ]));
+        ));
     }
 
     /**
@@ -569,6 +576,8 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
                 ]
             )
             ->build();
+
+        self::addProjectsInLoadApiMetadata($metadata, 'email');
     }
 
     protected function isChanged($prop, $val)
@@ -1126,7 +1135,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
     /**
      * @return $this
      */
-    public function setUnsubscribeForm(Form $unsubscribeForm = null)
+    public function setUnsubscribeForm(?Form $unsubscribeForm = null)
     {
         $this->unsubscribeForm = $unsubscribeForm;
 
@@ -1144,7 +1153,7 @@ class Email extends FormEntity implements VariantEntityInterface, TranslationEnt
     /**
      * @return $this
      */
-    public function setPreferenceCenter(Page $preferenceCenter = null)
+    public function setPreferenceCenter(?Page $preferenceCenter = null)
     {
         $this->preferenceCenter = $preferenceCenter;
 
