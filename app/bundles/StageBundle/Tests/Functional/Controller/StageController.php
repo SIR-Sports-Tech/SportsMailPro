@@ -5,14 +5,12 @@ namespace Mautic\StageBundle\Tests\Functional\Controller;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\LeadModel;
-use Mautic\StageBundle\Cache\StageCountCache;
 use Mautic\StageBundle\Entity\Stage;
 use Mautic\StageBundle\Model\StageModel;
+use Symfony\Component\HttpFoundation\Request;
 
 class StageController extends MauticMysqlTestCase
 {
-    private StageCountCache $stageCountCache;
-
     private StageModel $stageModel;
 
     private LeadModel $leadModel;
@@ -21,9 +19,8 @@ class StageController extends MauticMysqlTestCase
     {
         parent::setUp();
 
-        $this->stageCountCache = self::getContainer()->get(StageCountCache::class);
-        $this->stageModel      = self::getContainer()->get(StageModel::class);
-        $this->leadModel       = self::getContainer()->get(LeadModel::class);
+        $this->stageModel = self::getContainer()->get(StageModel::class);
+        $this->leadModel  = self::getContainer()->get(LeadModel::class);
     }
 
     public function testGetStageContactCount(): void
@@ -37,12 +34,12 @@ class StageController extends MauticMysqlTestCase
         $stage->setWeight(1);
         $this->stageModel->saveEntity($stage);
 
-        $this->assertEquals(0, $this->stageCountCache->getStageContactCount($stage->getId()));
+        $this->assertEquals(0, $this->getStageContactCountViaAjax($stage->getId()));
 
         $this->leadModel->addToStages($contact, $stage);
         $this->leadModel->saveEntity($contact);
 
-        $this->assertEquals(1, $this->stageCountCache->getStageContactCount($stage->getId()));
+        $this->assertEquals(1, $this->getStageContactCountViaAjax($stage->getId()));
 
         // create stage 2
         $stage2 = new Stage();
@@ -50,12 +47,31 @@ class StageController extends MauticMysqlTestCase
         $stage2->setWeight(2);
         $this->stageModel->saveEntity($stage2);
 
-        $this->assertEquals(0, $this->stageCountCache->getStageContactCount($stage2->getId()));
+        $this->assertEquals(0, $this->getStageContactCountViaAjax($stage2->getId()));
 
         $this->leadModel->addToStages($contact, $stage2);
         $this->leadModel->saveEntity($contact);
 
-        $this->assertEquals(1, $this->stageCountCache->getStageContactCount($stage2->getId()));
-        $this->assertEquals(0, $this->stageCountCache->getStageContactCount($stage->getId()));
+        $this->assertEquals(1, $this->getStageContactCountViaAjax($stage2->getId()));
+        $this->assertEquals(0, $this->getStageContactCountViaAjax($stage->getId()));
+    }
+
+    private function getStageContactCountViaAjax(int $stageId): int
+    {
+        $this->setCsrfHeader();
+        $this->client->xmlHttpRequest(
+            Request::METHOD_POST,
+            '/s/ajax',
+            ['action' => 'stage:getLeadCount', 'id' => $stageId]
+        );
+
+        $response = $this->client->getResponse();
+        $this->assertTrue($response->isSuccessful());
+
+        $responseData = json_decode($response->getContent(), true);
+        $this->assertIsArray($responseData);
+        $this->assertArrayHasKey('leadCount', $responseData);
+
+        return $responseData['leadCount'];
     }
 }
