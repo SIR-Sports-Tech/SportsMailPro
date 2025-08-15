@@ -198,7 +198,7 @@ final class EmailControllerFunctionalTest extends MauticMysqlTestCase
 
         $crawler = $this->client->request(Request::METHOD_GET, '/s/emails/new');
         $html    = $crawler->filterXPath("//select[@id='emailform_segmentTranslationParent']//optgroup")->html();
-        self::assertSame('<option value="'.$email->getId().'">'.$email->getName().'</option>', trim($html));
+        self::assertSame('<option value="'.$email->getId().'">'.$email->getName().' ('.$email->getId().')</option>', trim($html));
     }
 
     public function testSegmentEmailSend(): void
@@ -708,5 +708,47 @@ final class EmailControllerFunctionalTest extends MauticMysqlTestCase
             'parentField'  => 'templateTranslationParent',
             'useSegment'   => false,
         ];
+    }
+
+    /**
+     * Test email name length validation (190 character limit).
+     */
+    public function testEmailNameLengthValidation(): void
+    {
+        $longName = str_repeat('a', Email::MAX_NAME_SUBJECT_LENGTH + 1); // 191 characters
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/s/emails/new');
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $form = $crawler->selectButton('emailform[buttons][save]')->form();
+        $form['emailform[name]']->setValue($longName);
+        $form['emailform[subject]']->setValue('Valid Subject');
+        $form['emailform[emailType]']->setValue('template');
+
+        $this->client->submit($form);
+
+        $response = $this->client->getResponse();
+        $this->assertStringContainsString('Email name maximum length is 190 characters', $response->getContent());
+    }
+
+    /**
+     * Test email subject length validation (190 character limit).
+     */
+    public function testEmailSubjectLengthValidation(): void
+    {
+        $longSubject = str_repeat('b', Email::MAX_NAME_SUBJECT_LENGTH + 1); // 191 characters
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/s/emails/new');
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $form = $crawler->selectButton('emailform[buttons][save]')->form();
+        $form['emailform[name]']->setValue('Valid Name');
+        $form['emailform[subject]']->setValue($longSubject);
+        $form['emailform[emailType]']->setValue('template');
+
+        $this->client->submit($form);
+
+        $response = $this->client->getResponse();
+        $this->assertStringContainsString('Email subject maximum length is 190 characters', $response->getContent());
     }
 }

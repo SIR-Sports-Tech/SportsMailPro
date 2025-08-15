@@ -85,7 +85,7 @@ class CategoryControllerFunctionalTest extends MauticMysqlTestCase
         $crawler->addHtmlContent($html);
         $saveButton = $crawler->selectButton('category_form[buttons][save]');
         $form       = $saveButton->form();
-        $form['category_form[bundle]']->setValue('category');
+        $form['category_form[bundle]']->setValue('global');
         $form['category_form[title]']->setValue('Test');
         $form['category_form[isPublished]']->setValue('1');
         $form['category_form[inForm]']->setValue('1');
@@ -149,6 +149,26 @@ class CategoryControllerFunctionalTest extends MauticMysqlTestCase
         $updatedCategory = $categoryModel->getEntity($category->getId());
         $this->assertSame('Updated Test Category', $updatedCategory->getTitle());
         $this->assertSame('Updated description', $updatedCategory->getDescription());
+    }
+
+    public function testTypeFieldPersistsAfterValidationFailure(): void
+    {
+        $crawler                = $this->client->request(Request::METHOD_GET, 's/categories/category/new');
+        $clientResponse         = json_decode($this->client->getResponse()->getContent(), true);
+        $html                   = $clientResponse['newContent'];
+        $crawler->addHtmlContent($html);
+        $saveButton = $crawler->selectButton('category_form[buttons][save]');
+        $form       = $saveButton->form();
+        $form['category_form[bundle]']->setValue('global');
+        $form['category_form[title]']->setValue('');
+        $form['category_form[isPublished]']->setValue('1');
+        $form['category_form[inForm]']->setValue('1');
+
+        $this->client->submit($form);
+        Assert::assertTrue($this->client->getResponse()->isOk());
+        $clientResponse = $this->client->getResponse();
+        $body           = json_decode($clientResponse->getContent(), true);
+        $this->assertNotEmpty($crawler->filter('select#category_form_bundle')->count(), 'The "Type" (bundle) field should remain visible after validation failure.');
     }
 
     public function testDeleteUsedInStage(): void
