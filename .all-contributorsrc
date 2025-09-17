@@ -1598,6 +1598,24 @@
       "contributions": [
         "userTesting"
       ]
+    },
+    {
+      "login": "lolaslade",
+      "name": "lolcode",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2320484?v=4",
+      "profile": "https://github.com/lolaslade",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rodrigoaguilera",
+      "name": "Rodrigo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/655187?v=4",
+      "profile": "https://www.rodrigoaguilera.net",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
