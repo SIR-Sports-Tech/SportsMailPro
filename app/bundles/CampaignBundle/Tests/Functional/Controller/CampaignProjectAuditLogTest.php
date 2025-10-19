@@ -29,6 +29,7 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
     {
         $form = new Form();
         $form->setName($name);
+        $form->setAlias(strtolower(str_replace(' ', '_', $name)));
         $this->em->persist($form);
 
         return $form;
