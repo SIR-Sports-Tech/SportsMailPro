@@ -49,11 +49,10 @@ trait ProjectTrait
     {
         if ('projects' === $prop) {
             if ($val instanceof Project) {
-                if (!isset($this->changes['projects']['added'])) {
-                    $this->changes['projects']['added'] = [];
-                }
-                $this->changes['projects']['added'][] = $val->getName();
+                $this->changes['projects']['added'][$val->getId()] = $val->getName();
             } else {
+                // When removing, $val is the project name string
+                // We need to track removals differently since we don't have the ID
                 if (!isset($this->changes['projects']['removed'])) {
                     $this->changes['projects']['removed'] = [];
                 }
