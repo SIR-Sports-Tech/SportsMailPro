@@ -6,12 +6,32 @@ namespace Mautic\CampaignBundle\Tests\Functional\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\CoreBundle\Tests\Functional\CreateTestEntitiesTrait;
+use Mautic\FormBundle\Entity\Form;
+use Mautic\ProjectBundle\Entity\Project;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
 {
     use CreateTestEntitiesTrait;
+
+    private function createProject(string $name): Project
+    {
+        $project = new Project();
+        $project->setName($name);
+        $this->em->persist($project);
+
+        return $project;
+    }
+
+    private function createForm(string $name): Form
+    {
+        $form = new Form();
+        $form->setName($name);
+        $this->em->persist($form);
+
+        return $form;
+    }
 
     public function testCampaignProjectAuditLog(): void
     {
@@ -27,9 +47,6 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
 
         // 2. Create a project and add it to the campaign to generate audit log.
         $project = $this->createProject('Test Project');
-
-        $this->em->flush();
-        $this->em->clear();
 
         // Add the project to the campaign through the model to trigger audit log creation.
         $campaignModel = static::getContainer()->get('mautic.campaign.model.campaign');
@@ -73,9 +90,6 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
 
         // 2. Create a form and add it to the campaign to generate audit log.
         $form = $this->createForm('Test Form');
-
-        $this->em->flush();
-        $this->em->clear();
 
         // Add the form to the campaign through the model to trigger audit log creation.
         $campaignModel = static::getContainer()->get('mautic.campaign.model.campaign');
