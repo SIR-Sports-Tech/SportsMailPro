@@ -140,13 +140,13 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
         // Add the lead to the campaign through the model to trigger audit log creation.
         $campaignModel = static::getContainer()->get('mautic.campaign.model.campaign');
         $campaign      = $campaignModel->getEntity($campaignId);
-        
+
         // Create a campaign lead entity
         $campaignLead = new CampaignLead();
         $campaignLead->setCampaign($campaign);
         $campaignLead->setLead($lead);
         $campaignLead->setDateAdded(new \DateTime());
-        
+
         $campaign->addLead(0, $campaignLead);
         $campaignModel->saveEntity($campaign);
         $this->em->clear();
