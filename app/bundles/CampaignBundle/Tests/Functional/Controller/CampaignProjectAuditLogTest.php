@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mautic\CampaignBundle\Tests\Functional\Controller;
 
+use Mautic\CampaignBundle\Entity\Lead as CampaignLead;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\CoreBundle\Tests\Functional\CreateTestEntitiesTrait;
 use Mautic\FormBundle\Entity\Form;
@@ -141,7 +142,7 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
         $campaign      = $campaignModel->getEntity($campaignId);
         
         // Create a campaign lead entity
-        $campaignLead = new \Mautic\CampaignBundle\Entity\Lead();
+        $campaignLead = new CampaignLead();
         $campaignLead->setCampaign($campaign);
         $campaignLead->setLead($lead);
         $campaignLead->setDateAdded(new \DateTime());
