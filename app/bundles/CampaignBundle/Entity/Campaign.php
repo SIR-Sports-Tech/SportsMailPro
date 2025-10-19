@@ -27,6 +27,7 @@ use Mautic\CoreBundle\Entity\UuidTrait;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Entity\Lead as Contact;
 use Mautic\LeadBundle\Entity\LeadList;
+use Mautic\ProjectBundle\Entity\Project;
 use Mautic\ProjectBundle\Entity\ProjectTrait;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -580,6 +581,29 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     {
         $this->changes['lists']['removed'][$list->getId()] = $list->getName();
         $this->lists->removeElement($list);
+    }
+
+    /**
+     * Add project.
+     *
+     * @return Campaign
+     */
+    public function addProject(Project $project)
+    {
+        $this->projects[$project->getId()] = $project;
+
+        $this->changes['projects']['added'][$project->getId()] = $project->getName();
+
+        return $this;
+    }
+
+    /**
+     * Remove project.
+     */
+    public function removeProject(Project $project): void
+    {
+        $this->changes['projects']['removed'][$project->getId()] = $project->getName();
+        $this->projects->removeElement($project);
     }
 
     /**
