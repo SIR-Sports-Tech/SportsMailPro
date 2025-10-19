@@ -146,6 +146,7 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
         $campaignLead->setCampaign($campaign);
         $campaignLead->setLead($lead);
         $campaignLead->setDateAdded(new \DateTime());
+        $this->em->persist($campaignLead);
 
         $campaign->addLead(0, $campaignLead);
         $campaignModel->saveEntity($campaign);
