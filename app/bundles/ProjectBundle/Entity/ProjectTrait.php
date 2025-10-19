@@ -49,8 +49,14 @@ trait ProjectTrait
     {
         if ('projects' === $prop) {
             if ($val instanceof Project) {
+                if (!isset($this->changes['projects']['added'])) {
+                    $this->changes['projects']['added'] = [];
+                }
                 $this->changes['projects']['added'][] = $val->getName();
             } else {
+                if (!isset($this->changes['projects']['removed'])) {
+                    $this->changes['projects']['removed'] = [];
+                }
                 $this->changes['projects']['removed'][] = $val;
             }
         } else {
