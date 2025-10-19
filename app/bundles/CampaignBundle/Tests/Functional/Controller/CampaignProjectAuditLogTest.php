@@ -118,4 +118,50 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
             $this->client->getResponse()->getContent()
         );
     }
+
+    public function testCampaignLeadsAuditLog(): void
+    {
+        // 1. Create a campaign.
+        $campaign = $this->createCampaign('Leads Audit Log Campaign');
+        $campaign->setIsPublished(true);
+
+        $this->em->persist($campaign);
+        $this->em->flush();
+        $this->em->clear();
+
+        $campaignId = $campaign->getId();
+
+        // 2. Create a contact/lead and add it to the campaign to generate audit log.
+        $lead = $this->createLead('John', 'Doe', 'john.doe@example.com');
+
+        $this->em->flush();
+
+        // Add the lead to the campaign through the model to trigger audit log creation.
+        $campaignModel = static::getContainer()->get('mautic.campaign.model.campaign');
+        $campaign      = $campaignModel->getEntity($campaignId);
+        
+        // Create a campaign lead entity
+        $campaignLead = new \Mautic\CampaignBundle\Entity\Lead();
+        $campaignLead->setCampaign($campaign);
+        $campaignLead->setLead($lead);
+        $campaignLead->setDateAdded(new \DateTime());
+        
+        $campaign->addLead(0, $campaignLead);
+        $campaignModel->saveEntity($campaign);
+        $this->em->clear();
+
+        // 3. View the campaign to check audit log rendering.
+        $campaignViewUrl = '/s/campaigns/view/'.$campaignId;
+        $this->client->request(Request::METHOD_GET, $campaignViewUrl);
+        $this->assertResponseIsSuccessful();
+
+        $translator = static::getContainer()->get('translator');
+        \assert($translator instanceof TranslatorInterface);
+
+        // Verify that the leads changelog message appears.
+        $this->assertStringContainsString(
+            $translator->trans('mautic.campaign.changelog.leads.updated'),
+            $this->client->getResponse()->getContent()
+        );
+    }
 }
