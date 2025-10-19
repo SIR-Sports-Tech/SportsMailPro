@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Mautic\CampaignBundle\Tests\Functional\Controller;
 
-use Mautic\CampaignBundle\Entity\Lead as CampaignLead;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\CoreBundle\Tests\Functional\CreateTestEntitiesTrait;
 use Mautic\FormBundle\Entity\Form;
@@ -127,7 +126,7 @@ final class CampaignProjectAuditLogTest extends MauticMysqlTestCase
         // without causing errors. However, adding leads directly doesn't always
         // create audit log entries in the same way as projects/forms, so we'll
         // mark this as a basic smoke test.
-        
+
         $campaign = $this->createCampaign('Leads Audit Log Campaign');
         $campaign->setIsPublished(true);
 
