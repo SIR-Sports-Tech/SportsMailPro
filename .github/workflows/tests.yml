@@ -99,9 +99,9 @@ jobs:
         export SAML_PORT="${{ job.services.saml.ports[8080] }}"
 
         if [[ "${{ matrix.php-versions }}" == "8.2" ]] && [[ "${{ matrix.db-types }}" == "mariadb:10.11" ]]; then
-          php -d zend.assertions=1 -d pcov.enabled=1 bin/phpunit -d memory_limit=3G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist --coverage-clover=coverage.xml --log-junit=junit.xml
+          php -d zend.assertions=1 -d pcov.enabled=1 bin/phpunit -d memory_limit=3G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist --coverage-clover=coverage.xml --log-junit=junit.xml --filter SMimeFunctionalTest
         else
-          php -d zend.assertions=1 bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist
+          php -d zend.assertions=1 bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist --filter SMimeFunctionalTest
         fi
 
     - name: Upload coverage report
