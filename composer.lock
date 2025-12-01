@@ -6152,7 +6152,7 @@
             "dist": {
                 "type": "path",
                 "url": "app",
-                "reference": "2f385c2e07fc61e2a8a5bfc3621d7b31412a2d5b"
+                "reference": "84f5ede5ff192f448e3cd3370e22c773bdbf8454"
             },
             "require": {
                 "api-platform/core": "^4.1.0",
@@ -6182,7 +6182,7 @@
                 "geoip2/geoip2": "~2.0",
                 "giggsey/libphonenumber-for-php": "^8.12",
                 "guzzlehttp/guzzle": "^7.6",
-                "guzzlehttp/oauth-subscriber": "^0.8.0",
+                "guzzlehttp/oauth-subscriber": "^0.8.1",
                 "helios-ag/fm-elfinder-bundle": "^12.3",
                 "illuminate/collections": "^10.48",
                 "ip2location/ip2location-php": "^7.2",
