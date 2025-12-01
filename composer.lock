@@ -6229,7 +6229,7 @@
             "dist": {
                 "type": "path",
                 "url": "app",
-                "reference": "f9adf79cf8048b7983d95cf91e9f4ec71200cefb"
+                "reference": "46b9cf8b413eb8aeca97d5cfc40f9554a0b31517"
             },
             "require": {
                 "aws/aws-sdk-php": "~3.0",
@@ -6259,7 +6259,7 @@
                 "geoip2/geoip2": "~2.0",
                 "giggsey/libphonenumber-for-php": "^8.12",
                 "guzzlehttp/guzzle": "^7.6",
-                "guzzlehttp/oauth-subscriber": "^0.8.0",
+                "guzzlehttp/oauth-subscriber": "^0.8.1",
                 "helios-ag/fm-elfinder-bundle": "^12.3",
                 "illuminate/collections": "^10.48",
                 "ip2location/ip2location-php": "^7.2",
