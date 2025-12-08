@@ -251,6 +251,18 @@
         "channels": [
           "open-collective"
         ]
+      },
+      {
+        "guid": "elts-4-1-year",
+        "status": "active",
+        "name": "Extended Long Term Support - Mautic 4 - 1 year",
+        "description": "$2000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac. A year's security support after the official community support has closed. Purchased in blocks of one year from 1 January to 31 December, for a maximum of two years. See tiers and pricing details at https://mau.tc/elts.",
+        "amount": 2000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": [
+          "open-collective"
+        ]
       }
     ],
     "history": [
