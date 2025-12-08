@@ -180,12 +180,12 @@
           "open-collective"
         ]
       },
-            {
+      {
         "guid": "growth-tier",
         "status": "active",
         "name": "Growth Tier membership",
         "description": "$3000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac. A Unique Opportunity to Influence and Innovate\nEnhance your company's engagement in the open source community by joining the General Assembly of Mautic. Let your business be a beacon of influence and innovation.\n\nAs a member, you can lend your corporate vision to help shape our governance and future. See tiers and pricing details at https://mau.tc/membership.",
-        "amount": 1200,
+        "amount": 3000,
         "currency": "USD",
         "frequency": "yearly",
         "channels": [
@@ -196,7 +196,7 @@
         "guid": "bronze-tier",
         "status": "active",
         "name": "Bronze Tier membership",
-        "description": "$5000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac.A Unique Opportunity to Influence and Innovate\nEnhance your company's engagement in the open source community by joining the General Assembly of Mautic. Let your business be a beacon of influence and innovation.\n\nAs a member, you can lend your corporate vision to help shape our governance and future. See tiers and pricing details at https://mau.tc/membership.",
+        "description": "$5000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac. A Unique Opportunity to Influence and Innovate\nEnhance your company's engagement in the open source community by joining the General Assembly of Mautic. Let your business be a beacon of influence and innovation.\n\nAs a member, you can lend your corporate vision to help shape our governance and future. See tiers and pricing details at https://mau.tc/membership.",
         "amount": 5000,
         "currency": "USD",
         "frequency": "yearly",
@@ -208,7 +208,7 @@
         "guid": "silver-tier",
         "status": "active",
         "name": "Silver Tier membership",
-        "description": "$10000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac.A Unique Opportunity to Influence and Innovate\nEnhance your company's engagement in the open source community by joining the General Assembly of Mautic. Let your business be a beacon of influence and innovation.\n\nAs a member, you can lend your corporate vision to help shape our governance and future. See tiers and pricing details at https://mau.tc/membership.",
+        "description": "$10000 or appropriate rate based on your location for tax purposes using https://mau.tc/big-mac. A Unique Opportunity to Influence and Innovate\nEnhance your company's engagement in the open source community by joining the General Assembly of Mautic. Let your business be a beacon of influence and innovation.\n\nAs a member, you can lend your corporate vision to help shape our governance and future. See tiers and pricing details at https://mau.tc/membership.",
         "amount": 10000,
         "currency": "USD",
         "frequency": "yearly",
