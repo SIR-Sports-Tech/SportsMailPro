@@ -4,7 +4,7 @@ This file provides guidance to agents when working with code in this repository.
 
 ## Project Overview
 
-Mautic is an open-source marketing automation platform built on **Symfony 7.3** and **PHP 8.2+**. It follows a bundle-based architecture with core functionality in `app/bundles/`, plugins in `plugins/`, and themes in `themes/`.
+Mautic is an open-source marketing automation platform built on **Symfony 7.4** and **PHP 8.2+**. It follows a bundle-based architecture with core functionality in `app/bundles/`, plugins in `plugins/`, and themes in `themes/`.
 
 ## Essential Commands
 
