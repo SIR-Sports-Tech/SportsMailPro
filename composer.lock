@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c00d71631ffc4e4e78e071f2845be437",
+    "content-hash": "e2c42b187b0df2362d1bb9f6e4f5b761",
     "packages": [
         {
             "name": "api-platform/core",
@@ -16108,16 +16108,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.0.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "50d276fc3bf1430ec315f2f109bbde2769821524"
-            },
+            "version": "2.1.33",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/50d276fc3bf1430ec315f2f109bbde2769821524",
-                "reference": "50d276fc3bf1430ec315f2f109bbde2769821524",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9e800e6bee7d5bd02784d4c6069b48032d16224f",
+                "reference": "9e800e6bee7d5bd02784d4c6069b48032d16224f",
                 "shasum": ""
             },
             "require": {
@@ -16162,7 +16157,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-17T17:14:01+00:00"
+            "time": "2025-12-05T10:24:31+00:00"
         },
         {
             "name": "phpstan/phpstan-deprecation-rules",
@@ -17360,21 +17355,21 @@
         },
         {
             "name": "rector/rector",
-            "version": "2.0.0",
+            "version": "2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rectorphp/rector.git",
-                "reference": "121229164344175d94e53c319628257fe17787c4"
+                "reference": "3c5a641c39f2def0c93d36df118fb2e75cfc2aae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rectorphp/rector/zipball/121229164344175d94e53c319628257fe17787c4",
-                "reference": "121229164344175d94e53c319628257fe17787c4",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/3c5a641c39f2def0c93d36df118fb2e75cfc2aae",
+                "reference": "3c5a641c39f2def0c93d36df118fb2e75cfc2aae",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.4|^8.0",
-                "phpstan/phpstan": "^2.0.1"
+                "phpstan/phpstan": "^2.1.26"
             },
             "conflict": {
                 "rector/rector-doctrine": "*",
@@ -17399,6 +17394,7 @@
                 "MIT"
             ],
             "description": "Instant Upgrade and Automated Refactoring of any PHP code",
+            "homepage": "https://getrector.com/",
             "keywords": [
                 "automation",
                 "dev",
@@ -17407,7 +17403,7 @@
             ],
             "support": {
                 "issues": "https://github.com/rectorphp/rector/issues",
-                "source": "https://github.com/rectorphp/rector/tree/2.0.0"
+                "source": "https://github.com/rectorphp/rector/tree/2.2.0"
             },
             "funding": [
                 {
@@ -17415,7 +17411,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-12T09:41:12+00:00"
+            "time": "2025-10-06T12:18:16+00:00"
         },
         {
             "name": "sebastian/cli-parser",
