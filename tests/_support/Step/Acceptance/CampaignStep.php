@@ -16,6 +16,6 @@ class CampaignStep extends \AcceptanceTester
         $I->click(ContactPage::$firstCampaignFromAddList); // Select the first campaign from the list
         $I->click(ContactPage::$campaignsModalSaveButton); // Click Save
         $I->waitForElementNotVisible(self::MODAL_SELECTOR, 30); // Wait for modal to close
-        $I->wait(2); // Allow AJAX operation to complete
+        $I->ensureNotificationAppears('contacts affected');
     }
 }
