@@ -37,7 +37,7 @@ if (!filter_var($remoteAssetUrl, FILTER_VALIDATE_URL)) {
 
 // Ensure the URL uses HTTPS for security
 $parsedUrl = parse_url($remoteAssetUrl);
-if (!isset($parsedUrl['scheme']) || $parsedUrl['scheme'] !== 'https') {
+if (!isset($parsedUrl['scheme']) || 'https' !== $parsedUrl['scheme']) {
     echo "Error: Remote asset URL must use HTTPS protocol\n";
     exit(1);
 }
