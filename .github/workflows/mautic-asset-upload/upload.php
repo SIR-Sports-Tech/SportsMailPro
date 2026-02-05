@@ -42,9 +42,10 @@ if (!isset($parsedUrl['scheme']) || $parsedUrl['scheme'] !== 'https') {
     exit(1);
 }
 
-// Verify the URL is from GitHub releases (expected source)
+// Verify the URL is from GitHub releases (required for Mautic release process)
 if (!isset($parsedUrl['host']) || !preg_match('/^github\.com$/i', $parsedUrl['host'])) {
-    echo "Warning: Remote asset URL is not from github.com. Proceeding with caution.\n";
+    echo "Error: Remote asset URL must be from github.com for security\n";
+    exit(1);
 }
 
 // Set up the authentication
