@@ -17,7 +17,7 @@ $vars = [
     3 => 'password',
     4 => 'mauticVersion',
     5 => 'assetCategoryId',
-    6 => 'fileToUpload',
+    6 => 'remoteAssetUrl',
 ];
 
 foreach ($vars as $id => $var) {
@@ -27,6 +27,24 @@ foreach ($vars as $id => $var) {
     }
 
     $$var = $_SERVER['argv'][$id];
+}
+
+// Validate the remote asset URL for security
+if (!filter_var($remoteAssetUrl, FILTER_VALIDATE_URL)) {
+    echo "Error: Invalid URL format for remote asset: {$remoteAssetUrl}\n";
+    exit(1);
+}
+
+// Ensure the URL uses HTTPS for security
+$parsedUrl = parse_url($remoteAssetUrl);
+if (!isset($parsedUrl['scheme']) || $parsedUrl['scheme'] !== 'https') {
+    echo "Error: Remote asset URL must use HTTPS protocol\n";
+    exit(1);
+}
+
+// Verify the URL is from GitHub releases (expected source)
+if (!isset($parsedUrl['host']) || !preg_match('/^github\.com$/i', $parsedUrl['host'])) {
+    echo "Warning: Remote asset URL is not from github.com. Proceeding with caution.\n";
 }
 
 // Set up the authentication
@@ -40,41 +58,17 @@ $initAuth = new ApiAuth();
 $auth     = $initAuth->newAuth($settings, 'BasicAuth');
 $api      = new MauticApi();
 
-/** @var Mautic\Api\Files */
-$filesApi = $api->newApi('files', $auth, $instanceUrl);
-
 /** @var Mautic\Api\Assets */
 $assetApi = $api->newApi('assets', $auth, $instanceUrl);
 
 /**
- * Upload the file.
- */
-$filesApi->setFolder('assets');
-// File should be an absolute path!
-$fileRequest = [
-    'file' => $fileToUpload,
-];
-
-$response = $filesApi->create($fileRequest);
-
-if (isset($response['error'])) {
-    echo $response['error']['code'].': '.$response['error']['message']."\n";
-    exit(1);
-}
-
-if (!isset($response['file']) || !isset($response['file']['name'])) {
-    echo 'An unknown error occurred while uploading the release asset to our Mautic instance. '
-        ."Please try again or debug locally (we don't provide logs in CI for security reasons)\n";
-    exit(1);
-}
-
-/**
- * Create the actual asset based on the file we just uploaded.
+ * Create the asset with remote storage location.
+ * This references the GitHub release asset directly without uploading to local storage.
  */
 $data = [
     'title'           => "Mautic {$mauticVersion}",
-    'storageLocation' => 'local',
-    'file'            => $response['file']['name'],
+    'storageLocation' => 'remote',
+    'remotePath'      => $remoteAssetUrl,
     'category'        => $assetCategoryId,
     'isPublished'     => true,
 ];
