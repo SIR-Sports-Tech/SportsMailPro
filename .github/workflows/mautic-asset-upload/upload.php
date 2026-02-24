@@ -94,6 +94,9 @@ $assetApi = $api->newApi('assets', $auth, $instanceUrl);
 $data = [
     'title'           => "Mautic {$mauticVersion}",
     'storageLocation' => 'remote',
+    // Mautic expects the remote URL in the "file" field for remote assets.
+    'file'            => $remoteAssetUrl,
+    // Keep remotePath for backward compatibility and clarity.
     'remotePath'      => $remoteAssetUrl,
     'category'        => $assetCategoryId,
     'isPublished'     => true,
