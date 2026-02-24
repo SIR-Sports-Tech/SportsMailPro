@@ -35,19 +35,44 @@ if (!filter_var($remoteAssetUrl, FILTER_VALIDATE_URL)) {
     exit(1);
 }
 
-// Ensure the URL uses HTTPS for security
+// Parse the URL components
 $parsedUrl = parse_url($remoteAssetUrl);
-if (!isset($parsedUrl['scheme']) || 'https' !== $parsedUrl['scheme']) {
+
+// Ensure the URL uses HTTPS for security
+if (!isset($parsedUrl['scheme']) || 'https' !== strtolower($parsedUrl['scheme'])) {
     echo "Error: Remote asset URL must use HTTPS protocol\n";
     exit(1);
 }
 
-// Verify the URL is from GitHub releases (required for Mautic release process)
+// Verify the URL is from GitHub (required for Mautic release process)
 if (!isset($parsedUrl['host']) || !preg_match('/^github\.com$/i', $parsedUrl['host'])) {
     echo "Error: Remote asset URL must be from github.com for security\n";
     exit(1);
 }
 
+// Disallow userinfo (username:password@host) to avoid ambiguous/abusive URLs
+if (!empty($parsedUrl['user']) || !empty($parsedUrl['pass'])) {
+    echo "Error: Remote asset URL must not contain user information\n";
+    exit(1);
+}
+
+// Disallow query string or fragment to ensure a stable, direct asset URL
+if (!empty($parsedUrl['query']) || !empty($parsedUrl['fragment'])) {
+    echo "Error: Remote asset URL must not contain query parameters or fragment\n";
+    exit(1);
+}
+
+// Enforce the exact GitHub release asset path for the specified Mautic version
+if (empty($parsedUrl['path'])) {
+    echo "Error: Remote asset URL is missing a path component\n";
+    exit(1);
+}
+
+$expectedPath = '/mautic/mautic/releases/download/'.$mauticVersion.'/'.$mauticVersion.'.zip';
+if ($parsedUrl['path'] !== $expectedPath) {
+    echo "Error: Remote asset URL path must be \"{$expectedPath}\" for Mautic version {$mauticVersion}\n";
+    exit(1);
+}
 // Set up the authentication
 $settings = [
     'userName'   => $username,
