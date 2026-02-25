@@ -380,13 +380,13 @@ This project follows the [all-contributors][all-contributors] specification. Con
 [facebook]: <https://www.facebook.com/MauticCommunity/>
 [slack]: <https://www.mautic.org/community/get-involved/communication-channels>
 [contributing]: <https://contribute.mautic.org/contributing-to-mautic>
-[contributing-md]: <https://github.com/mautic/mautic/blob/6.x/.github/CONTRIBUTING.md>
+[contributing-md]: <https://github.com/mautic/mautic/blob/7.x/.github/CONTRIBUTING.md>
 [contribute-developer]: <https://contribute.mautic.org/contributing-to-mautic/developer>
 [t1-issues]: <https://github.com/mautic/mautic/issues?q=is%3Aissue+is%3Aopen+label%3AT1>
 [download-mautic]: <https://www.mautic.org/download>
 [tagged-release]: <https://github.com/mautic/mautic/releases>
 [composer]: <http://getcomposer.org/>
-[download-zip]: <https://github.com/mautic/mautic/archive/refs/heads/5.2.zip>
+[download-zip]: <https://github.com/mautic/mautic/archive/refs/heads/7.x.zip>
 [ddev-mautic]: <https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html>
 [troubleshooting]: <https://docs.mautic.org/en/troubleshooting>
 [community]: <https://www.mautic.org/community>
@@ -396,7 +396,7 @@ This project follows the [all-contributors][all-contributors] specification. Con
 [best-pulls]: <https://github.com/mautic/mautic/pulls?q=is%3Aopen+is%3Apr+-label%3Ablocked+-label%3Awip+-is%3Adraft+-label%3Aready-to-commit+-label%3Apending-feedback+label%3Aready-to-test+status%3Asuccess>
 [mautic-trials]: <https://mautic.org/start-using-mautic/try-mautic/>
 [mautic-releases]: <https://www.mautic.org/mautic-releases>
-[install-mautic-composer]: <https://docs.mautic.org/en/5.2/getting_started/how_to_install_mautic.html#installing-with-composer>
+[install-mautic-composer]: <https://docs.mautic.org/en/7.0/getting_started/how_to_install_mautic.html#installing-with-composer>
 [requirements]: <https://mautic.org/mautic-requirements/>
 [supported-versions]: <https://mautic.org/releases/>
 [low-no-code]: <https://mau.tc/no-code>

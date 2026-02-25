@@ -27,8 +27,8 @@
     }
   ],
   "require": {
-    "composer/installers": "^1.11",
-    "mautic/core-composer-scaffold": "4.x-dev",
+    "composer/installers": "^2.3",
+    "mautic/core-composer-scaffold": "1.0.0",
     "mautic/core-project-message": "4.x-dev",
     "mautic/core-lib": "*",
     "mautic/grapes-js-builder-bundle": "*",
@@ -137,10 +137,8 @@
   "prefer-stable": true,
   "config": {
     "sort-packages": true,
-    "secure-http": false,
     "allow-plugins": {
       "composer/installers": true,
-      "composer/package-versions-deprecated": true,
       "symfony/flex": true,
       "mautic/core-composer-scaffold": true,
       "mautic/core-project-message": true,
