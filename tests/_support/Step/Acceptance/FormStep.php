@@ -18,10 +18,13 @@ class FormStep extends \AcceptanceTester
         string $fieldType,
         string $modalHeader,
         string $label,
-        string $labelSelector = FormPage::$FORM_FIELD_LABEL_SELECTOR,
-        string $saveButtonSelector = FormPage::$FORM_FIELD_SAVE_BUTTON_SELECTOR,
+        ?string $labelSelector = null,
+        ?string $saveButtonSelector = null,
     ): void {
         $I = $this;
+        $labelSelector ??= FormPage::$FORM_FIELD_LABEL_SELECTOR;
+        $saveButtonSelector ??= FormPage::$FORM_FIELD_SAVE_BUTTON_SELECTOR;
+
         $I->click(FormPage::$ADD_NEW_FIELD_BUTTON_TEXT);
         $I->click($fieldType);
         $I->waitForText($modalHeader, 5);
