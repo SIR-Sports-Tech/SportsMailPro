@@ -236,8 +236,8 @@ class ContactManagementCest
         $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 30);
 
         // Verify that the first and second contacts are not in the campaign yet
-        $I->dontSee($contactName1, CampaignPage::$contactsTabContainer);
-        $I->dontSee($contactName2, CampaignPage::$contactsTabContainer);
+        $I->dontSee($contactName1);
+        $I->dontSee($contactName2);
 
         // Return to the contacts page
         $I->amOnPage(ContactPage::$URL);
@@ -259,9 +259,9 @@ class ContactManagementCest
 
         // Verify that the first and second contacts are now in the campaign
         $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 60);
-        $I->waitForText($contactName1, 60, CampaignPage::$contactsTabContainer);
-        $I->see($contactName1, CampaignPage::$contactsTabContainer);
-        $I->see($contactName2, CampaignPage::$contactsTabContainer);
+        $I->waitForText($contactName1, 60);
+        $I->see($contactName1);
+        $I->see($contactName2);
     }
 
     public function batchRemoveFromCampaign(
@@ -309,8 +309,8 @@ class ContactManagementCest
         $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 30);
 
         // Verify that the first and second contacts are no longer in the campaign
-        $I->dontSee($contactName1, CampaignPage::$contactsTabContainer);
-        $I->dontSee($contactName2, CampaignPage::$contactsTabContainer);
+        $I->dontSee($contactName1);
+        $I->dontSee($contactName2);
     }
 
     public function batchChangeOwner(
