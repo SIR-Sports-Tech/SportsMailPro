@@ -6,9 +6,8 @@ class CampaignPage
 {
     public static $URL = 's/campaigns/view/1';
 
-    public static $contactsTab                  = '//*[@id="app-content"]/div/div[2]/div[1]/div[2]/div[4]/ul/li[last()-1]/a';
-    public static $firstContactFromContactsTab  = '#leads-container > div.pa-md > div > div:nth-child(1) > div';
-    public static $secondContactFromContactsTab = '#leads-container > div.pa-md > div > div:nth-child(2) > div';
+    public static $contactsTab          = '//a[@href="#leads-container" and contains(normalize-space(), "Contacts")]';
+    public static $contactsTabContainer = '#leads-container';
 
     public static function route($param)
     {

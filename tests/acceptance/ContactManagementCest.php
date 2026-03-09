@@ -233,10 +233,11 @@ class ContactManagementCest
         // Click on the "Contacts" tab in the campaign page
         $I->waitForElementClickable(CampaignPage::$contactsTab, 5);
         $I->click(CampaignPage::$contactsTab);
+        $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 30);
 
         // Verify that the first and second contacts are not in the campaign yet
-        $I->dontSee($contactName1, CampaignPage::$firstContactFromContactsTab);
-        $I->dontSee($contactName2, CampaignPage::$secondContactFromContactsTab);
+        $I->dontSee($contactName1, CampaignPage::$contactsTabContainer);
+        $I->dontSee($contactName2, CampaignPage::$contactsTabContainer);
 
         // Return to the contacts page
         $I->amOnPage(ContactPage::$URL);
@@ -257,9 +258,10 @@ class ContactManagementCest
         $I->click(CampaignPage::$contactsTab);
 
         // Verify that the first and second contacts are now in the campaign
-        $I->waitForElementVisible(CampaignPage::$firstContactFromContactsTab, 60);
-        $I->see($contactName1, CampaignPage::$firstContactFromContactsTab);
-        $I->see($contactName2, CampaignPage::$secondContactFromContactsTab);
+        $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 60);
+        $I->waitForText($contactName1, 60, CampaignPage::$contactsTabContainer);
+        $I->see($contactName1, CampaignPage::$contactsTabContainer);
+        $I->see($contactName2, CampaignPage::$contactsTabContainer);
     }
 
     public function batchRemoveFromCampaign(
@@ -304,10 +306,11 @@ class ContactManagementCest
         // Navigate to the campaign page and click on the "Contacts" tab
         $I->amOnPage(CampaignPage::$URL);
         $I->click(CampaignPage::$contactsTab);
+        $I->waitForElementVisible(CampaignPage::$contactsTabContainer, 30);
 
         // Verify that the first and second contacts are no longer in the campaign
-        $I->dontSee($contactName1, CampaignPage::$firstContactFromContactsTab);
-        $I->dontSee($contactName2, CampaignPage::$secondContactFromContactsTab);
+        $I->dontSee($contactName1, CampaignPage::$contactsTabContainer);
+        $I->dontSee($contactName2, CampaignPage::$contactsTabContainer);
     }
 
     public function batchChangeOwner(
