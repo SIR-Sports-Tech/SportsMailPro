@@ -82,8 +82,18 @@ class ContactStep extends \AcceptanceTester
         $xpathDropdownButton = '//button[@id="core-options"]';
         $I->waitForElementClickable($xpathDropdownButton, 10);
         $I->click($xpathDropdownButton);
-        // Select the desired option from the dropdown menu
-        $xpathOption = "//ul[contains(@class, 'page-list-actions') and contains(@class, 'dropdown-menu')]/li[$option]";
+
+        // Select the desired option from the dropdown menu by label when provided.
+        if (is_string($option) && !ctype_digit($option)) {
+            $xpathOption = "//ul[contains(@class, 'page-list-actions') and contains(@class, 'dropdown-menu')]/li/a[contains(normalize-space(), \"$option\")]";
+            $I->waitForElementClickable($xpathOption, 10);
+            $I->click($xpathOption);
+
+            return;
+        }
+
+        $position    = (int) $option;
+        $xpathOption = "//ul[contains(@class, 'page-list-actions') and contains(@class, 'dropdown-menu')]/li[$position]";
         $I->waitForElementClickable($xpathOption, 10);
         $I->click($xpathOption);
     }

@@ -4,9 +4,10 @@ namespace Page\Acceptance;
 
 class CampaignPage
 {
-    public static $URL = 's/campaigns/view/1';
+    public static $URL          = 's/campaigns/view/1';
+    public static $contactsURL  = 's/campaigns/view/1/contact/1';
 
-    public static $contactsTab          = '//a[@href="#leads-container" and contains(normalize-space(), "Contacts")]';
+    public static $contactsTab          = '//ul[contains(@class, "nav-tabs")]/li/a[@href="#leads-container"]';
     public static $contactsTabContainer = '#leads-container';
 
     public static function route($param)
