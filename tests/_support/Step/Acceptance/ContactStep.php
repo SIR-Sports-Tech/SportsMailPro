@@ -73,6 +73,30 @@ class ContactStep extends \AcceptanceTester
     }
 
     /**
+     * Select a contact by visible name from the contact list.
+     */
+    public function selectContactByNameFromList(string $contactName): void
+    {
+        $I     = $this;
+        $xpath = "//*[@id='leadTable']/tbody/tr[td[2]/a/div[1][normalize-space()=\"$contactName\"]]/td[1]/div/span/input";
+        $I->waitForElementClickable($xpath, 10);
+        $I->checkOption($xpath);
+        $I->seeCheckboxIsChecked($xpath);
+    }
+
+    /**
+     * Select a contact by lead ID from the contact list.
+     */
+    public function selectContactByLeadIdFromList(int $leadId): void
+    {
+        $I     = $this;
+        $xpath = "//*[@id='leadTable']/tbody/tr[td[2]/a[contains(@href, '/contacts/view/$leadId')]]/td[1]/div/span/input";
+        $I->waitForElementClickable($xpath, 10);
+        $I->checkOption($xpath);
+        $I->seeCheckboxIsChecked($xpath);
+    }
+
+    /**
      * Select an option from the dropdown menu for multiple selected contacts.
      */
     public function selectOptionFromDropDownForMultipleSelections($option)

@@ -271,6 +271,16 @@ class ContactManagementCest
     ): void {
         $I->amOnPage(ContactPage::$URL);
 
+        // Capture the specific contacts to avoid row-order related flakiness.
+        $leadHref1    = $I->grabAttributeFrom("//*[@id='leadTable']/tbody/tr[1]/td[2]/a", 'href');
+        $leadHref2    = $I->grabAttributeFrom("//*[@id='leadTable']/tbody/tr[2]/td[2]/a", 'href');
+        preg_match('#/contacts/view/(\d+)#', (string) $leadHref1, $leadIdMatch1);
+        preg_match('#/contacts/view/(\d+)#', (string) $leadHref2, $leadIdMatch2);
+        $leadId1 = (int) ($leadIdMatch1[1] ?? 0);
+        $leadId2 = (int) ($leadIdMatch2[1] ?? 0);
+        Assert::assertGreaterThan(0, $leadId1);
+        Assert::assertGreaterThan(0, $leadId2);
+
         // Select the first and second contacts from the list
         $contact->selectContactFromList(1);
         $contact->selectContactFromList(2);
@@ -285,21 +295,9 @@ class ContactManagementCest
         // Return to the contacts page
         $I->amOnPage(ContactPage::$URL);
 
-        // Grab the names of the first and second contacts from the list
-        $contactName1 = $contact->grabContactNameFromList(1);
-        $contactName2 = $contact->grabContactNameFromList(2);
-        $leadHref1    = $I->grabAttributeFrom("//*[@id='leadTable']/tbody/tr[1]/td[2]/a", 'href');
-        $leadHref2    = $I->grabAttributeFrom("//*[@id='leadTable']/tbody/tr[2]/td[2]/a", 'href');
-        preg_match('#/contacts/view/(\d+)#', (string) $leadHref1, $leadIdMatch1);
-        preg_match('#/contacts/view/(\d+)#', (string) $leadHref2, $leadIdMatch2);
-        $leadId1 = (int) ($leadIdMatch1[1] ?? 0);
-        $leadId2 = (int) ($leadIdMatch2[1] ?? 0);
-        Assert::assertGreaterThan(0, $leadId1);
-        Assert::assertGreaterThan(0, $leadId2);
-
-        // Select the first and second contacts again for removal
-        $contact->selectContactFromList(1);
-        $contact->selectContactFromList(2);
+        // Re-select the same two contacts by lead ID to avoid row order and duplicate-name issues.
+        $contact->selectContactByLeadIdFromList($leadId1);
+        $contact->selectContactByLeadIdFromList($leadId2);
 
         // // Select change campaign option from dropdown for multiple selections
         $contact->selectOptionFromDropDownForMultipleSelections('Change Campaigns');
@@ -312,6 +310,8 @@ class ContactManagementCest
         $I->waitForElementVisible(ContactPage::$firstCampaignFromRemoveList, 10);
         $I->click(ContactPage::$firstCampaignFromRemoveList);
         $I->click(ContactPage::$campaignsModalSaveButton);
+        $I->waitForElementNotVisible('#MauticSharedModal', 30);
+        $I->ensureNotificationAppears('2 contacts affected');
 
         // Navigate to the campaign page and click the Contacts tab
         $I->amOnPage(CampaignPage::$URL);
