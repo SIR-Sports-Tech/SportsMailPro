@@ -320,26 +320,9 @@ class ContactManagementCest
         $I->waitForElement(CampaignPage::$contactsTabContainer, 15);
         $I->waitForJS('return document.querySelector("#leads-container .contact-cards") !== null || document.querySelector("#leads-container h4") !== null;', 15);
 
-        // Poll DB briefly because campaign membership updates can be async in CI.
-        $remainingLead1 = -1;
-        $remainingLead2 = -1;
-        for ($attempt = 0; $attempt < 15; ++$attempt) {
-            $remainingLead1 = $I->grabNumRecords('test_campaign_leads', ['lead_id' => $leadId1, 'campaign_id' => $campaignId]);
-            $remainingLead2 = $I->grabNumRecords('test_campaign_leads', ['lead_id' => $leadId2, 'campaign_id' => $campaignId]);
-
-            if (0 === $remainingLead1 && 0 === $remainingLead2) {
-                break;
-            }
-
-            $I->wait(1);
-        }
-
-        Assert::assertSame(0, $remainingLead1);
-        Assert::assertSame(0, $remainingLead2);
-
-        // Verify that the selected contacts are no longer in the campaign.
-        $I->dontSeeInDatabase('test_campaign_leads', ['lead_id' => $leadId1, 'campaign_id' => $campaignId]);
-        $I->dontSeeInDatabase('test_campaign_leads', ['lead_id' => $leadId2, 'campaign_id' => $campaignId]);
+        // Mautic soft-deletes campaign membership: the row is kept with manually_removed=1 rather than deleted.
+        $I->seeInDatabase('test_campaign_leads', ['lead_id' => $leadId1, 'campaign_id' => $campaignId, 'manually_removed' => 1]);
+        $I->seeInDatabase('test_campaign_leads', ['lead_id' => $leadId2, 'campaign_id' => $campaignId, 'manually_removed' => 1]);
     }
 
     public function batchChangeOwner(
