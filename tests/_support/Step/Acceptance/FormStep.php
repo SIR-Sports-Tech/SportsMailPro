@@ -32,6 +32,6 @@ class FormStep extends \AcceptanceTester
         $I->fillField($labelSelector, $label);
         $I->waitForElementClickable($saveButtonSelector, 10);
         $I->click($saveButtonSelector);
-        $I->wait(1);
+        $I->waitForElementNotVisible($labelSelector, 10); // modal closed
     }
 }
