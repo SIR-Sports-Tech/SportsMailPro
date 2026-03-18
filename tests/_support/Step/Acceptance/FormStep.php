@@ -26,12 +26,20 @@ class FormStep extends \AcceptanceTester
         $saveButtonSelector ??= FormPage::$FORM_FIELD_SAVE_BUTTON_SELECTOR;
 
         $I->click(FormPage::$ADD_NEW_FIELD_BUTTON_TEXT);
+        $I->waitForElementVisible($fieldType, 10);
         $I->click($fieldType);
-        $I->waitForText($modalHeader, 5);
+        $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 10);
+        $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_BODY_SELECTOR, 10);
+        $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_HEADER_SELECTOR, 10);
+
+        // Keep semantic check that expected field editor was loaded.
+        $I->waitForText($modalHeader, 10, FormPage::$FORM_COMPONENT_MODAL_SELECTOR);
+
+        // Prefer stable id selector with name-based fallback in one selector.
         $I->waitForElementVisible($labelSelector, 10);
         $I->fillField($labelSelector, $label);
         $I->waitForElementClickable($saveButtonSelector, 10);
         $I->click($saveButtonSelector);
-        $I->waitForElementNotVisible($labelSelector, 10); // modal closed
+        $I->waitForElementNotVisible(FormPage::$FORM_COMPONENT_MODAL_BODY_SELECTOR, 10);
     }
 }
