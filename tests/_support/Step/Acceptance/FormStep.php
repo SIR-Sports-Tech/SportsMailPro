@@ -26,14 +26,16 @@ class FormStep extends \AcceptanceTester
         $labelSelector ??= FormPage::$FORM_FIELD_LABEL_SELECTOR;
         $saveButtonSelector ??= FormPage::$FORM_FIELD_SAVE_BUTTON_SELECTOR;
 
-        $I->click(FormPage::$ADD_NEW_FIELD_BUTTON_TEXT);
+        $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
+        $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
         $I->waitForElementVisible($fieldType, 10);
         $I->click($fieldType);
         try {
             $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 20);
         } catch (TimeoutException) {
             // Retry once: chosen dropdown selection occasionally does not trigger modal in CI.
-            $I->click(FormPage::$ADD_NEW_FIELD_BUTTON_TEXT);
+            $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
+            $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
             $I->waitForElementVisible($fieldType, 10);
             $I->click($fieldType);
             $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 20);
