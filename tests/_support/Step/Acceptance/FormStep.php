@@ -27,17 +27,25 @@ class FormStep extends \AcceptanceTester
         $saveButtonSelector ??= FormPage::$FORM_FIELD_SAVE_BUTTON_SELECTOR;
 
         $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
-        $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
-        $I->waitForElementVisible($fieldType, 10);
-        $I->click($fieldType);
+
+        // Prefer a deterministic path: trigger the modal from the underlying select option.
+        $modalTriggered = $this->triggerFieldTypeSelectionByLabel($modalHeader);
+
+        if (true !== $modalTriggered) {
+            // Fallback to the chosen UI interaction path.
+            $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
+            $I->waitForElementVisible($fieldType, 10);
+            $I->click($fieldType);
+        }
+
         try {
             $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 20);
         } catch (TimeoutException) {
-            // Fallback for flaky chosen interactions in CI: set the underlying select and trigger change.
+            // Retry deterministic path first in case the first trigger race-lost with UI rendering.
             $modalTriggered = $this->triggerFieldTypeSelectionByLabel($modalHeader);
 
             if (true !== $modalTriggered) {
-                // Keep the existing UI retry as a final fallback.
+                // Keep the UI retry as a final fallback.
                 $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
                 $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
                 $I->waitForElementVisible($fieldType, 10);
@@ -59,6 +67,7 @@ class FormStep extends \AcceptanceTester
         $I->waitForElementClickable($saveButtonSelector, 10);
         $I->click($saveButtonSelector);
         $I->waitForElementNotVisible(FormPage::$FORM_COMPONENT_MODAL_BODY_SELECTOR, 10);
+        $I->waitForElementNotVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 10);
     }
 
     private function triggerFieldTypeSelectionByLabel(string $label): mixed
@@ -76,6 +85,19 @@ if (!select) {
 const option = Array.from(select.options).find((opt) => opt.textContent.trim() === label);
 if (!option) {
     return false;
+}
+
+if (!option.getAttribute('data-target') || !option.getAttribute('data-href')) {
+    return false;
+}
+
+if (window.mQuery && window.Mautic && typeof window.Mautic.ajaxifyModal === 'function') {
+    window.mQuery(option).trigger('click');
+    window.Mautic.ajaxifyModal(window.mQuery(option));
+    select.value = option.value;
+    window.mQuery(select).trigger('change');
+    window.mQuery(select).trigger('chosen:updated');
+    return true;
 }
 
 select.value = option.value;
