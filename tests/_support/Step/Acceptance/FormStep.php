@@ -33,11 +33,17 @@ class FormStep extends \AcceptanceTester
         try {
             $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 20);
         } catch (TimeoutException) {
-            // Retry once: chosen dropdown selection occasionally does not trigger modal in CI.
-            $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
-            $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
-            $I->waitForElementVisible($fieldType, 10);
-            $I->click($fieldType);
+            // Fallback for flaky chosen interactions in CI: set the underlying select and trigger change.
+            $modalTriggered = $this->triggerFieldTypeSelectionByLabel($modalHeader);
+
+            if (true !== $modalTriggered) {
+                // Keep the existing UI retry as a final fallback.
+                $I->waitForElementVisible(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR, 10);
+                $I->click(FormPage::$ADD_NEW_FIELD_TRIGGER_SELECTOR);
+                $I->waitForElementVisible($fieldType, 10);
+                $I->click($fieldType);
+            }
+
             $I->waitForElementVisible(FormPage::$FORM_COMPONENT_MODAL_SELECTOR, 20);
         }
 
@@ -53,5 +59,33 @@ class FormStep extends \AcceptanceTester
         $I->waitForElementClickable($saveButtonSelector, 10);
         $I->click($saveButtonSelector);
         $I->waitForElementNotVisible(FormPage::$FORM_COMPONENT_MODAL_BODY_SELECTOR, 10);
+    }
+
+    private function triggerFieldTypeSelectionByLabel(string $label): mixed
+    {
+        $encodedLabel = json_encode($label);
+
+        return $this->executeJS(<<<JS
+const label = {$encodedLabel};
+const select = document.querySelector('#fields-container .available-fields select.form-builder-new-component');
+
+if (!select) {
+    return false;
+}
+
+const option = Array.from(select.options).find((opt) => opt.textContent.trim() === label);
+if (!option) {
+    return false;
+}
+
+select.value = option.value;
+select.dispatchEvent(new Event('change', { bubbles: true }));
+
+if (window.mQuery) {
+    window.mQuery(select).trigger('chosen:updated');
+}
+
+return true;
+JS);
     }
 }
