@@ -10,9 +10,11 @@ modules:
         port: 4444
         window_size: maximize
         capabilities:
+          acceptInsecureCerts: true
           chromeOptions:
             args:
               - "--ignore-certificate-errors"
+              - "--allow-insecure-localhost"
               - "--disable-dev-shm-usage"
     - Db:
         dsn: 'mysql:host=%DB_HOST%;dbname=%DB_NAME%'

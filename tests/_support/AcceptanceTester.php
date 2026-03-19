@@ -31,6 +31,16 @@ class AcceptanceTester extends Codeception\Actor
         }
         // logging in
         $I->amOnPage('/s/login');
+
+        // Some WebDriver environments can preserve an authenticated browser context
+        // and redirect away from the login form immediately.
+        if ([] === $I->grabMultiple('#username')) {
+            $I->waitForElement('h1.page-header-title', 30);
+            $I->saveSessionSnapshot('login');
+
+            return;
+        }
+
         $I->fillField('#username', $name);
         $I->fillField('#password', $password);
         $I->click('button[type=submit]');
