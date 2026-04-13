@@ -15,6 +15,30 @@ type Response = {
   total: number,
 }
 
+async function syncToBeehiiv(email: string, name?: string) {
+  const apiKey = process.env.BEEHIIV_API_KEY;
+  const pubId = process.env.BEEHIIV_PUBLICATION_ID;
+  if (!apiKey || !pubId) return;
+
+  try {
+    await fetch(`https://api.beehiiv.com/v2/publications/${pubId}/subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        ...(name && { first_name: name }),
+        utm_source: 'sportsmailpro',
+        utm_medium: 'app',
+      }),
+    });
+  } catch (e) {
+    console.error('Beehiiv sync failed:', e);
+  }
+}
+
 async function createSubscriber(req: CustomRequest, res: NextApiResponse<string | Error>) {
   try {
     const subscriberDAO = new SubscriberDAO(req.db);
@@ -34,6 +58,7 @@ async function createSubscriber(req: CustomRequest, res: NextApiResponse<string 
         clicked: 0,
       });
       await sendConfirmationEmail(req.body.email, { confirmationId, list: req.body.list })
+      await syncToBeehiiv(req.body.email, req.body.name)
     }
 
     res.status(200).send('Successfully subscribed!')
