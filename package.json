@@ -1,0 +1,36 @@
+{
+  "name": "sportsmailpro",
+  "version": "1.0.0",
+  "description": "AI-Powered Email Marketing for Sports Organizations — by Sports Industry Radar",
+  "author": "SIR Sports Tech",
+  "homepage": "https://sportsindustryradar.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SIR-Sports-Tech/SportsMailPro"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.438.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.2.0",
+    "next": "14.0.3",
+    "nodemailer": "^6.9.7",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/nodemailer": "^6.4.14",
+    "@types/react": "^18",
+    "autoprefixer": "^10.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
+}
